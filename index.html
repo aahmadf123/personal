@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partner Blueprint — a compatibility self-reflection tool</title>
+<style>
+  :root{
+    --bg:#11151C;
+    --bg-grid: rgba(201,163,92,0.045);
+    --panel:#1B212C;
+    --panel-2:#222A38;
+    --panel-line: rgba(201,163,92,0.16);
+    --gold:#C9A35C;
+    --gold-dim:#8A7242;
+    --teal:#5FA8A0;
+    --teal-dim:#3E726C;
+    --rust:#B5564A;
+    --text:#EDE7DA;
+    --text-muted:#8B93A1;
+    --font-display: ui-serif, Georgia, "Times New Roman", serif;
+    --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Courier New", monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px) 0 0/32px 32px,
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px) 0 0/32px 32px,
+      var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{
+    max-width:920px;
+    margin:0 auto;
+    padding:40px 24px 96px;
+  }
+  a{color:var(--gold);}
+
+  /* ---------- header / masthead ---------- */
+  .masthead{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:36px;
+    padding-bottom:20px;
+    border-bottom:1px solid var(--panel-line);
+  }
+  .masthead .mark{flex:0 0 auto;}
+  .masthead h1{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:1.5rem;
+    letter-spacing:0.01em;
+    margin:0;
+    color:var(--text);
+  }
+  .masthead .sub{
+    font-family:var(--font-mono);
+    font-size:0.72rem;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-top:4px;
+  }
+
+  /* ---------- generic panel ---------- */
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:3px;
+    padding:32px;
+    position:relative;
+  }
+  .panel + .panel{margin-top:20px;}
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:0.7rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin:0 0 10px;
+  }
+
+  /* ---------- intro ---------- */
+  .intro h2{
+    font-family:var(--font-display);
+    font-size:1.9rem;
+    line-height:1.25;
+    margin:0 0 16px;
+    max-width:32ch;
+  }
+  .intro p{
+    color:var(--text-muted);
+    line-height:1.65;
+    max-width:60ch;
+    margin:0 0 14px;
+    font-size:0.97rem;
+  }
+  .intro ul{margin:18px 0; padding-left:0; list-style:none;}
+  .intro li{
+    display:flex; gap:12px;
+    padding:10px 0;
+    border-top:1px solid var(--panel-line);
+    color:var(--text-muted);
+    font-size:0.92rem;
+    line-height:1.5;
+  }
+  .intro li:last-child{border-bottom:1px solid var(--panel-line);}
+  .intro li .num{font-family:var(--font-mono); color:var(--gold); flex:0 0 28px;}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    font-family:var(--font-mono);
+    font-size:0.78rem;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    background:transparent;
+    color:var(--gold);
+    border:1px solid var(--gold-dim);
+    padding:12px 22px;
+    border-radius:2px;
+    cursor:pointer;
+    transition:background 0.15s ease, color 0.15s ease, border-color .15s ease;
+  }
+  .btn:hover{background:rgba(201,163,92,0.1); border-color:var(--gold);}
+  .btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+  .btn.primary{background:var(--gold); color:#1B1404; border-color:var(--gold); font-weight:600;}
+  .btn.primary:hover{background:#dcb46c;}
+  .btn.ghost{border-color:transparent; color:var(--text-muted);}
+  .btn.ghost:hover{color:var(--text); background:rgba(255,255,255,0.04);}
+  .btn:disabled{opacity:0.35; cursor:not-allowed;}
+  .btn-row{display:flex; gap:12px; align-items:center; margin-top:28px; flex-wrap:wrap;}
+
+  /* ---------- progress rail ---------- */
+  .rail{
+    display:flex;
+    gap:6px;
+    margin-bottom:24px;
+    flex-wrap:wrap;
+  }
+  .rail .seg{
+    flex:1 1 0;
+    min-width:18px;
+    height:4px;
+    background:var(--panel-2);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .rail .seg i{display:block; height:100%; transition:width .15s ease;}
+  .rail-label{
+    font-family:var(--font-mono);
+    font-size:0.7rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:10px;
+  }
+
+  /* ---------- question ---------- */
+  .q-cat{
+    font-family:var(--font-mono);
+    font-size:0.7rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--teal);
+    margin:0 0 14px;
+  }
+  .q-text{
+    font-family:var(--font-display);
+    font-size:1.35rem;
+    line-height:1.4;
+    margin:0 0 28px;
+    max-width:48ch;
+  }
+  .scale{
+    display:flex;
+    gap:10px;
+    margin-bottom:6px;
+  }
+  .scale button{
+    flex:1;
+    padding:16px 8px;
+    background:var(--panel-2);
+    border:1px solid var(--panel-line);
+    border-radius:2px;
+    color:var(--text-muted);
+    font-family:var(--font-mono);
+    font-size:0.78rem;
+    cursor:pointer;
+    text-align:center;
+    transition:all .12s ease;
+  }
+  .scale button:hover{border-color:var(--gold-dim); color:var(--text);}
+  .scale button.sel{
+    background:rgba(201,163,92,0.14);
+    border-color:var(--gold);
+    color:var(--gold);
+    font-weight:600;
+  }
+  .scale-labels{
+    display:flex; justify-content:space-between;
+    font-size:0.74rem; color:var(--text-muted); margin-bottom:24px;
+  }
+  .choice-list{display:flex; flex-direction:column; gap:10px; margin-bottom:6px;}
+  .choice-list button{
+    text-align:left;
+    padding:14px 18px;
+    background:var(--panel-2);
+    border:1px solid var(--panel-line);
+    border-radius:2px;
+    color:var(--text);
+    cursor:pointer;
+    font-family:var(--font-body);
+    font-size:0.93rem;
+    transition:all .12s ease;
+  }
+  .choice-list button:hover{border-color:var(--gold-dim);}
+  .choice-list button.sel{border-color:var(--gold); background:rgba(201,163,92,0.1);}
+  .check-list{display:flex; flex-direction:column; gap:10px;}
+  .check-list label{
+    display:flex; align-items:flex-start; gap:12px;
+    padding:14px 18px;
+    background:var(--panel-2);
+    border:1px solid var(--panel-line);
+    border-radius:2px;
+    cursor:pointer;
+    font-size:0.92rem;
+  }
+  .check-list input{margin-top:3px; accent-color:var(--gold);}
+  .text-input{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--panel-line);
+    border-radius:2px;
+    color:var(--text);
+    font-family:var(--font-body);
+    font-size:0.92rem;
+    padding:12px 14px;
+    margin-top:4px;
+  }
+  .hint{color:var(--text-muted); font-size:0.82rem; margin:-18px 0 24px;}
+
+  /* ---------- results layout ---------- */
+  .results-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:20px;
+  }
+  @media (max-width:760px){ .results-grid{grid-template-columns:1fr;} }
+  .chart-wrap{display:flex; align-items:center; justify-content:center;}
+  .legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:18px; justify-content:center;}
+  .legend-item{display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em;}
+  .swatch{width:11px; height:11px; border-radius:50%; display:inline-block;}
+
+  .profile-text{
+    font-family:var(--font-display);
+    font-size:1.05rem;
+    line-height:1.75;
+    color:var(--text);
+  }
+  .profile-text strong{color:var(--gold); font-weight:600;}
+
+  table.breakdown{width:100%; border-collapse:collapse; margin-top:6px;}
+  table.breakdown th{
+    text-align:left; font-family:var(--font-mono); font-size:0.68rem;
+    text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);
+    padding:8px 10px; border-bottom:1px solid var(--panel-line);
+  }
+  table.breakdown td{padding:10px 10px; border-bottom:1px solid var(--panel-line); font-size:0.88rem; vertical-align:middle;}
+  table.breakdown tr:last-child td{border-bottom:none;}
+  .bar-track{background:var(--panel-2); border-radius:2px; height:8px; width:100%; overflow:hidden;}
+  .bar-fill{height:100%; background:var(--gold);}
+  .bar-fill.cand{background:var(--teal);}
+
+  .tag{
+    display:inline-block; font-family:var(--font-mono); font-size:0.68rem;
+    letter-spacing:0.06em; text-transform:uppercase;
+    border:1px solid var(--gold-dim); color:var(--gold);
+    padding:3px 8px; border-radius:2px; margin:2px 6px 2px 0;
+  }
+  .tag.rust{border-color:var(--rust); color:var(--rust);}
+  .tag.teal{border-color:var(--teal-dim); color:var(--teal);}
+
+  .dealbreaker-flag{
+    border:1px solid var(--rust);
+    background:rgba(181,86,74,0.1);
+    color:var(--rust);
+    padding:14px 18px;
+    border-radius:2px;
+    font-size:0.88rem;
+    margin-top:18px;
+    line-height:1.5;
+  }
+
+  .candidate-card{
+    border:1px solid var(--panel-line);
+    border-radius:3px;
+    padding:22px 24px;
+    margin-top:16px;
+    background:var(--panel-2);
+  }
+  .candidate-card h3{
+    font-family:var(--font-display); font-size:1.15rem; margin:0 0 4px;
+    display:flex; align-items:baseline; gap:10px; justify-content:space-between;
+  }
+  .candidate-score{font-family:var(--font-mono); color:var(--teal); font-size:1rem;}
+  .candidate-card .meta{color:var(--text-muted); font-size:0.82rem; margin-bottom:14px;}
+
+  .rank-list{display:flex; flex-direction:column; gap:10px; margin-top:10px;}
+  .rank-row{
+    display:flex; align-items:center; gap:14px;
+    padding:12px 16px; background:var(--panel-2); border:1px solid var(--panel-line); border-radius:2px;
+  }
+  .rank-row .pos{font-family:var(--font-mono); color:var(--gold); font-size:0.85rem; width:22px;}
+  .rank-row .name{flex:1; font-size:0.92rem;}
+  .rank-row .score{font-family:var(--font-mono); color:var(--teal); font-size:0.92rem;}
+
+  .empty-state{
+    text-align:center; padding:50px 20px; color:var(--text-muted);
+  }
+  .empty-state p{max-width:40ch; margin:8px auto 0; line-height:1.6; font-size:0.9rem;}
+
+  footer{
+    text-align:center; margin-top:50px; color:var(--text-muted);
+    font-family:var(--font-mono); font-size:0.7rem; letter-spacing:0.06em;
+  }
+
+  .toolbar{display:flex; gap:10px; justify-content:flex-end; margin-bottom:18px; flex-wrap:wrap;}
+  .section-title{font-family:var(--font-display); font-size:1.3rem; margin:0 0 6px;}
+  .section-desc{color:var(--text-muted); font-size:0.88rem; margin:0 0 22px; max-width:56ch; line-height:1.55;}
+
+  input[type=file]{display:none;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<input type="file" id="importFile" accept="application/json">
+<script>
+/* ====================== DATA ====================== */
+
+const CATEGORIES = [
+  {id:'values',        label:'Core Values',               short:'Values'},
+  {id:'security',       label:'Relational Security',       short:'Security'},
+  {id:'communication',  label:'Communication & Conflict',  short:'Communication'},
+  {id:'affection',      label:'Affection & Connection',    short:'Affection'},
+  {id:'lifestyle',      label:'Lifestyle & Daily Rhythm',  short:'Lifestyle'},
+  {id:'traits',         label:'Personality Traits',        short:'Traits'},
+];
+
+// Each question: id, cat, text, low label, high label
+const QUESTIONS = [
+  // values
+  {id:'v1', cat:'values', text:'Building a close, involved family life together', low:'Not important', high:'Essential'},
+  {id:'v2', cat:'values', text:'Achieving ambitious career or professional goals', low:'Not important', high:'Essential'},
+  {id:'v3', cat:'values', text:'Financial security and careful long-term planning', low:'Not important', high:'Essential'},
+  {id:'v4', cat:'values', text:'Adventure, travel, and new experiences', low:'Not important', high:'Essential'},
+  {id:'v5', cat:'values', text:'Spiritual or religious life as something we share', low:'Not important', high:'Essential'},
+  {id:'v6', cat:'values', text:'Ongoing personal growth, learning, and intellectual depth', low:'Not important', high:'Essential'},
+  // security
+  {id:'s1', cat:'security', text:'Having a lot of independence and personal space within the relationship', low:'Not important', high:'Essential'},
+  {id:'s2', cat:'security', text:'Getting frequent verbal reassurance that the relationship is solid', low:'Not important', high:'Essential'},
+  {id:'s3', cat:'security', text:'Working through disagreements by talking them out immediately, rather than taking space first', low:'Not important', high:'Essential'},
+  {id:'s4', cat:'security', text:'Building trust gradually over time before fully opening up', low:'Not important', high:'Essential'},
+  {id:'s5', cat:'security', text:'Feeling safe being emotionally vulnerable early in the relationship', low:'Not important', high:'Essential'},
+  // communication
+  {id:'c1', cat:'communication', text:'Direct, straightforward communication over hints or diplomacy', low:'Not important', high:'Essential'},
+  {id:'c2', cat:'communication', text:'Regular deep, reflective conversations about life, beliefs, or the future', low:'Not important', high:'Essential'},
+  {id:'c3', cat:'communication', text:'Playful teasing and humor as a primary way of connecting', low:'Not important', high:'Essential'},
+  {id:'c4', cat:'communication', text:'Checking in with each other often throughout the day', low:'Not important', high:'Essential'},
+  {id:'c5', cat:'communication', text:'A calm, even-keeled communication style that rarely escalates', low:'Not important', high:'Essential'},
+  // affection
+  {id:'a1', cat:'affection', text:'Hearing affirming, appreciative words', low:'Not important', high:'Essential'},
+  {id:'a2', cat:'affection', text:'Spending uninterrupted, undistracted time together', low:'Not important', high:'Essential'},
+  {id:'a3', cat:'affection', text:'Practical acts of help and support', low:'Not important', high:'Essential'},
+  {id:'a4', cat:'affection', text:'Thoughtful gifts and small gestures', low:'Not important', high:'Essential'},
+  {id:'a5', cat:'affection', text:'Physical affection and touch', low:'Not important', high:'Essential'},
+  // lifestyle
+  {id:'l1', cat:'lifestyle', text:'High social energy — going out and meeting people often', low:'Not important', high:'Essential'},
+  {id:'l2', cat:'lifestyle', text:'Strong fitness and health-conscious habits', low:'Not important', high:'Essential'},
+  {id:'l3', cat:'lifestyle', text:'A structured, predictable daily routine over spontaneity', low:'Not important', high:'Essential'},
+  {id:'l4', cat:'lifestyle', text:'Career ambition that takes priority over strict work-life balance', low:'Not important', high:'Essential'},
+  {id:'l5', cat:'lifestyle', text:'Comfort with social drinking', low:'Not important', high:'Essential'},
+  {id:'l6', cat:'lifestyle', text:'Wanting to raise children together', low:'Not important', high:'Essential'},
+  // traits
+  {id:'t1', cat:'traits', text:'Openness to new ideas, people, and experiences', low:'Not important', high:'Essential'},
+  {id:'t2', cat:'traits', text:'Conscientiousness — being organized, reliable, and disciplined', low:'Not important', high:'Essential'},
+  {id:'t3', cat:'traits', text:'Extraversion — outgoing, socially energized', low:'Not important', high:'Essential'},
+  {id:'t4', cat:'traits', text:'Warmth and agreeableness in how they treat people', low:'Not important', high:'Essential'},
+  {id:'t5', cat:'traits', text:'Emotional steadiness, especially under stress', low:'Not important', high:'Essential'},
+];
+
+const DEALBREAKERS = [
+  {id:'d1', text:'Smoking or regular tobacco / vape use'},
+  {id:'d2', text:'No interest in eventually having children'},
+  {id:'d3', text:'Unwillingness to relocate or sustain a long-distance relationship'},
+  {id:'d4', text:'A fundamentally different stance on religion or spirituality'},
+  {id:'d5', text:'A pattern of dishonesty about major life facts'},
+  {id:'d6', text:'Very different financial values (e.g. spending vs. saving habits)'},
+];
+
+// One alignment question per category, used when scoring a candidate
+const CANDIDATE_QUESTIONS = CATEGORIES.map(c => ({
+  id:'cand_'+c.id, cat:c.id,
+  text:'Based on what you know about them, how well does this person align with your priorities around '+c.label.toLowerCase()+'?',
+  low:'Not well aligned', high:'Strongly aligned'
+}));
+
+/* ====================== STATE ====================== */
+
+const state = {
+  view: 'intro',           // intro | quiz | dealbreakers | profile | candIntro | candQuiz | candDealbreakers | candResult | compare
+  qIndex: 0,
+  answers: {},              // questionId -> 1..5
+  dealbreakers: [],         // array of dealbreaker ids
+  dealbreakerOther: '',
+  candidates: [],           // {id, name, answers:{}, dealbreakers:[], dealbreakerOther:''}
+  draftCandidate: null,     // candidate currently being added
+  candQIndex: 0,
+  lastCandidateResultId: null,
+};
+
+let idCounter = 1;
+function nextId(){ return 'c' + (idCounter++) + '_' + Date.now().toString(36); }
+
+/* ====================== SCORING ====================== */
+
+function avg(arr){ return arr.reduce((a,b)=>a+b,0) / arr.length; }
+function toPct(v1to5){ return Math.round(((v1to5-1)/4)*100); }
+
+function categoryScores(answersObj){
+  const out = {};
+  CATEGORIES.forEach(cat => {
+    const items = QUESTIONS.filter(q => q.cat === cat.id).map(q => answersObj[q.id]).filter(v => v !== undefined);
+    out[cat.id] = items.length ? toPct(avg(items)) : 0;
+  });
+  return out;
+}
+
+function candidateCategoryScores(answersObj){
+  const out = {};
+  CATEGORIES.forEach(cat => {
+    const v = answersObj['cand_'+cat.id];
+    out[cat.id] = v !== undefined ? toPct(v) : 0;
+  });
+  return out;
+}
+
+function weightedCompatibility(idealScores, candScores){
+  let num = 0, den = 0;
+  CATEGORIES.forEach(cat => {
+    const w = idealScores[cat.id];
+    num += w * candScores[cat.id];
+    den += w;
+  });
+  return den > 0 ? Math.round(num / den) : 0;
+}
+
+/* ====================== PROFILE TEXT GENERATION ====================== */
+
+function generateProfileText(){
+  const scores = categoryScores(state.answers);
+  const ranked = [...CATEGORIES].sort((a,b)=> scores[b.id]-scores[a.id]);
+  const top = ranked[0], second = ranked[1], lowest = ranked[ranked.length-1];
+
+  const topItems = QUESTIONS
+    .filter(q => state.answers[q.id] >= 4)
+    .sort((a,b)=> (state.answers[b.id] - state.answers[a.id]))
+    .slice(0,5);
+
+  const affectionRanked = QUESTIONS.filter(q=>q.cat==='affection')
+    .sort((a,b)=> (state.answers[b.id]||0) - (state.answers[a.id]||0));
+  const topAffection = affectionRanked[0];
+
+  let p1 = `Your priorities cluster most strongly around <strong>${top.label.toLowerCase()}</strong> and <strong>${second.label.toLowerCase()}</strong>. `;
+  if (topItems.length){
+    p1 += `Specifically, you rated these as close to essential: ${topItems.map(q=>'"'+q.text.charAt(0).toLowerCase()+q.text.slice(1)+'"').join('; ')}.`;
+  }
+
+  let p2 = '';
+  if (topAffection){
+    p2 += `When it comes to feeling connected day-to-day, <strong>${topAffection.text.toLowerCase()}</strong> stands out as what matters most to you. `;
+  }
+  const s_indep = state.answers['s1']||3, s_reassure = state.answers['s2']||3, s_immediate = state.answers['s3']||3, s_slow = state.answers['s4']||3;
+  if (s_reassure >= 4 && s_indep <= 2){
+    p2 += `You tend to want closeness and reassurance more than distance — a partner who is generous with verbal affirmation and consistent follow-through will likely feel safest to you. `;
+  } else if (s_indep >= 4){
+    p2 += `You value having real independence inside a relationship, so a partner who respects space and doesn't need constant togetherness will likely be a better fit. `;
+  }
+  if (s_immediate >= 4 && s_slow <= 2){
+    p2 += `You'd rather resolve friction quickly than let it sit, which points toward a partner who is also comfortable addressing things head-on.`;
+  } else if (s_slow >= 4){
+    p2 += `You prefer trust to build gradually, which points toward a partner who won't push for instant emotional access.`;
+  }
+
+  let p3 = `<strong>${lowest.label}</strong> matters comparatively less to you than the rest — it's worth not over-weighting that category when you're evaluating someone.`;
+
+  return [p1, p2, p3].filter(Boolean).map(p => `<p>${p}</p>`).join('');
+}
+
+/* ====================== RADAR / COMPASS CHART ====================== */
+
+function buildRadarSVG(axes, datasets, size){
+  size = size || 320;
+  const cx = size/2, cy = size/2;
+  const R = size*0.36;
+  const labelR = R + size*0.085;
+  const N = axes.length;
+  const angleFor = i => (-90 + i*(360/N)) * Math.PI/180;
+
+  let svg = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="Compatibility compass chart">`;
+
+  // rings
+  [20,40,60,80,100].forEach(pct => {
+    const pts = axes.map((a,i)=>{
+      const ang = angleFor(i); const r = R*(pct/100);
+      return (cx + r*Math.cos(ang)).toFixed(1) + ',' + (cy + r*Math.sin(ang)).toFixed(1);
+    }).join(' ');
+    svg += `<polygon points="${pts}" fill="none" stroke="rgba(201,163,92,0.16)" stroke-width="1"/>`;
+  });
+
+  // axis lines + labels
+  axes.forEach((a,i)=>{
+    const ang = angleFor(i);
+    const x2 = cx + R*Math.cos(ang), y2 = cy + R*Math.sin(ang);
+    svg += `<line x1="${cx}" y1="${cy}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="rgba(201,163,92,0.16)" stroke-width="1"/>`;
+    const lx = cx + labelR*Math.cos(ang), ly = cy + labelR*Math.sin(ang);
+    let anchor = 'middle';
+    if (Math.cos(ang) > 0.3) anchor = 'start';
+    else if (Math.cos(ang) < -0.3) anchor = 'end';
+    svg += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" font-family="ui-monospace,Menlo,monospace" font-size="${size*0.030}" fill="#8B93A1" letter-spacing="0.04em">${a.short.toUpperCase()}</text>`;
+  });
+
+  // datasets
+  datasets.forEach(ds => {
+    const pts = axes.map((a,i)=>{
+      const ang = angleFor(i); const v = ds.values[a.id]||0; const r = R*(v/100);
+      return [(cx + r*Math.cos(ang)), (cy + r*Math.sin(ang))];
+    });
+    const pointsStr = pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+    const dash = ds.dashed ? `stroke-dasharray="5,4"` : '';
+    svg += `<polygon points="${pointsStr}" fill="${ds.color}" fill-opacity="0.14" stroke="${ds.color}" stroke-width="2" ${dash}/>`;
+    pts.forEach(p=>{
+      svg += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="${ds.color}"/>`;
+    });
+  });
+
+  // center mark
+  svg += `<circle cx="${cx}" cy="${cy}" r="2" fill="#C9A35C"/>`;
+  svg += `</svg>`;
+  return svg;
+}
+
+/* ====================== HELPERS ====================== */
+
+function escapeHtml(str){
+  if(!str) return '';
+  return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function compassMark(){
+  return `<svg width="34" height="34" viewBox="0 0 34 34">
+    <circle cx="17" cy="17" r="15" fill="none" stroke="#C9A35C" stroke-width="1.2"/>
+    <circle cx="17" cy="17" r="2" fill="#C9A35C"/>
+    <path d="M17 4 L20 17 L17 30 L14 17 Z" fill="none" stroke="#C9A35C" stroke-width="1"/>
+    <path d="M4 17 L17 14 L30 17 L17 20 Z" fill="none" stroke="#5FA8A0" stroke-width="1"/>
+  </svg>`;
+}
+
+function shell(content, subtitle){
+  return `
+    <div class="masthead">
+      <div class="mark">${compassMark()}</div>
+      <div>
+        <h1>Partner Blueprint</h1>
+        <div class="sub">${subtitle || 'A compatibility self-reflection tool'}</div>
+      </div>
+    </div>
+    ${content}
+    <footer>Drafted privately in your browser — nothing leaves this tab unless you export it.</footer>
+  `;
+}
+
+/* ====================== RENDER: INTRO ====================== */
+
+function renderIntro(){
+  const hasProgress = Object.keys(state.answers).length > 0;
+  const content = `
+    <div class="panel intro">
+      <p class="eyebrow">Partner Blueprint</p>
+      <h2>Figure out what you're actually looking for — then check it against someone real.</h2>
+      <p>This walks through ${QUESTIONS.length} short questions about your values, how you handle closeness and conflict, what makes you feel cared for, your day-to-day rhythm, and the traits that matter to you in a partner. It's a structured way to get your own preferences out of your head and onto paper — not a clinical or scientific assessment of you or anyone else.</p>
+      <ul>
+        <li><span class="num">01</span><span>Answer questions about yourself — what you value, need, and prioritize.</span></li>
+        <li><span class="num">02</span><span>Get a written profile, a compass chart, and a category breakdown.</span></li>
+        <li><span class="num">03</span><span>Optionally score someone you're considering against that blueprint.</span></li>
+      </ul>
+      <p class="hint" style="margin:0 0 6px;">Everything stays in this browser tab — nothing is uploaded anywhere. Use "Export" later to save your results to a file you keep yourself.</p>
+      <div class="btn-row">
+        <button class="btn primary" data-action="start-quiz">${hasProgress?'Continue':'Begin'} →</button>
+        ${hasProgress?'<button class="btn ghost" data-action="retake">Start over</button>':''}
+        <button class="btn ghost" data-action="import-json">Import a saved blueprint</button>
+      </div>
+    </div>
+  `;
+  appEl.innerHTML = shell(content, null);
+}
+
+/* ====================== RENDER: MAIN QUIZ ====================== */
+
+function renderQuiz(){
+  const q = QUESTIONS[state.qIndex];
+  const cat = CATEGORIES.find(c => c.id === q.cat);
+  const railHtml = CATEGORIES.map(c => {
+    const qs = QUESTIONS.filter(x => x.cat === c.id);
+    const answered = qs.filter(x => state.answers[x.id] !== undefined).length;
+    const pct = Math.round(answered/qs.length*100);
+    const isCurrent = c.id === cat.id;
+    return `<div class="seg"><i style="width:${pct}%; background:${isCurrent ? 'var(--teal)' : 'var(--gold)'}"></i></div>`;
+  }).join('');
+  const selected = state.answers[q.id];
+  const scaleHtml = [1,2,3,4,5].map(v =>
+    `<button data-action="answer" data-qid="${q.id}" data-value="${v}" class="${selected===v?'sel':''}">${v}</button>`
+  ).join('');
+
+  const content = `
+    <div class="rail-label">Question ${state.qIndex+1} of ${QUESTIONS.length}</div>
+    <div class="rail">${railHtml}</div>
+    <div class="panel">
+      <p class="q-cat">${cat.label}</p>
+      <p class="q-text">${q.text}</p>
+      <div class="scale">${scaleHtml}</div>
+      <div class="scale-labels"><span>${q.low}</span><span>${q.high}</span></div>
+      <div class="btn-row">
+        <button class="btn ghost" data-action="quiz-back" ${state.qIndex===0?'disabled':''}>← Back</button>
+        <button class="btn primary" data-action="quiz-next" ${selected===undefined?'disabled':''}>${state.qIndex===QUESTIONS.length-1?'Continue to non-negotiables':'Next'}</button>
+      </div>
+    </div>
+  `;
+  appEl.innerHTML = shell(content, 'Building your blueprint');
+}
+
+/* ====================== RENDER: MAIN DEALBREAKERS ====================== */
+
+function renderDealbreakers(){
+  const items = DEALBREAKERS.map(d => {
+    const checked = state.dealbreakers.includes(d.id);
+    return `<label><input type="checkbox" data-action="toggle-dealbreaker" data-id="${d.id}" ${checked?'checked':''}/><span>${d.text}</span></label>`;
+  }).join('');
+  const content = `
+    <div class="panel">
+      <p class="eyebrow">Last step</p>
+      <h2 class="section-title">Non-negotiables</h2>
+      <p class="section-desc">Separate from the importance ratings — check anything that would end things outright, regardless of how well everything else lines up.</p>
+      <div class="check-list">${items}</div>
+      <p class="hint" style="margin-top:18px; margin-bottom:6px;">Anything else that's a hard line for you?</p>
+      <input class="text-input" data-action="other-dealbreaker-input" type="text" placeholder="Optional" value="${escapeHtml(state.dealbreakerOther)}"/>
+      <div class="btn-row">
+        <button class="btn ghost" data-action="dealbreakers-back">← Back</button>
+        <button class="btn primary" data-action="dealbreakers-done">See my blueprint →</button>
+      </div>
+    </div>
+  `;
+  appEl.innerHTML = shell(content, 'Building your blueprint');
+}
+
+/* ====================== RENDER: PROFILE RESULTS ====================== */
+
+function renderProfile(){
+  const scores = categoryScores(state.answers);
+  const radarSvg = buildRadarSVG(CATEGORIES, [{label:'Your Blueprint', color:'#C9A35C', values:scores}], 320);
+  const profileHtml = generateProfileText();
+
+  const rows = [...CATEGORIES].sort((a,b)=>scores[b.id]-scores[a.id]).map(c => `
+    <tr>
+      <td>${c.label}</td>
+      <td style="width:45%"><div class="bar-track"><div class="bar-fill" style="width:${scores[c.id]}%"></div></div></td>
+      <td style="font-family:var(--font-mono); text-align:right;">${scores[c.id]}</td>
+    </tr>
+  `).join('');
+
+  const dbChosen = DEALBREAKERS.filter(d => state.dealbreakers.includes(d.id));
+  const dbHtml = (dbChosen.length || state.dealbreakerOther)
+    ? `<div style="margin-top:18px;">` + dbChosen.map(d=>`<span class="tag rust">${d.text}</span>`).join('') + (state.dealbreakerOther ? `<span class="tag rust">${escapeHtml(state.dealbreakerOther)}</span>` : '') + `</div>`
+    : `<p class="hint" style="margin-top:14px;">No hard non-negotiables flagged.</p>`;
+
+  let candListHtml;
+  if (state.candidates.length){
+    const ranked = [...state.candidates].sort((a,b)=>
+      weightedCompatibility(scores, candidateCategoryScores(b.answers)) - weightedCompatibility(scores, candidateCategoryScores(a.answers))
+    );
+    candListHtml = `
+      <div class="rank-list">
+        ${ranked.map((cd,i)=>{
+          const score = weightedCompatibility(scores, candidateCategoryScores(cd.answers));
+          return `<div class="rank-row" data-action="view-candidate" data-id="${cd.id}" style="cursor:pointer;">
+            <span class="pos">${i+1}.</span>
+            <span class="name">${escapeHtml(cd.name || 'Candidate')}</span>
+            <span class="score">${score}%</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="btn-row">
+        <button class="btn ghost" data-action="add-candidate">+ Add another candidate</button>
+        ${state.candidates.length>1?'<button class="btn ghost" data-action="compare-all">Compare side by side</button>':''}
+      </div>
+    `;
+  } else {
+    candListHtml = `
+      <div class="empty-state" style="padding:24px 10px;"><p>No one to compare yet.</p></div>
+      <div class="btn-row" style="justify-content:center;">
+        <button class="btn primary" data-action="add-candidate">+ Add a candidate to compare</button>
+      </div>
+    `;
+  }
+
+  const content = `
+    <div class="toolbar">
+      <button class="btn ghost" data-action="export-json">Export blueprint (.json)</button>
+      <button class="btn ghost" data-action="import-json">Import</button>
+      <button class="btn ghost" data-action="retake">Retake quiz</button>
+    </div>
+    <div class="panel">
+      <p class="eyebrow">Your blueprint</p>
+      <h2 class="section-title">What you're actually looking for</h2>
+      <div class="results-grid">
+        <div class="chart-wrap">${radarSvg}</div>
+        <div class="profile-text">${profileHtml}</div>
+      </div>
+      ${dbHtml}
+    </div>
+    <div class="panel">
+      <p class="eyebrow">Category breakdown</p>
+      <table class="breakdown"><tbody>${rows}</tbody></table>
+    </div>
+    <div class="panel">
+      <p class="eyebrow">Compare against someone</p>
+      <p class="section-desc">Add a person you're considering and see how they line up against your blueprint — not a verdict, just a way to think it through.</p>
+      ${candListHtml}
+    </div>
+  `;
+  appEl.innerHTML = shell(content, 'Your blueprint');
+}
+
+/* ====================== RENDER: CANDIDATE FLOW ====================== */
+
+function renderCandIntro(){
+  const content = `
+    <div class="panel">
+      <p class="eyebrow">New comparison</p>
+      <h2 class="section-title">Who are we comparing?</h2>
+      <p class="section-desc">Just a label so you can tell candidates apart later — a first name or initials is plenty.</p>
+      <input class="text-input" id="candNameInput" type="text" placeholder='e.g. "J." or a first name' value="${escapeHtml(state.draftCandidate.name)}"/>
+      <div class="btn-row">
+        <button class="btn ghost" data-action="cancel-candidate">Cancel</button>
+        <button class="btn primary" data-action="start-cand-quiz">Continue →</button>
+      </div>
+    </div>
+  `;
+  appEl.innerHTML = shell(content, 'Comparing a candidate');
+}
+
+function renderCandQuiz(){
+  const q = CANDIDATE_QUESTIONS[state.candQIndex];
+  const selected = state.draftCandidate.answers[q.id];
+  const railHtml = CANDIDATE_QUESTIONS.map((cq,i) => {
+    const filled = i < state.candQIndex ? 100 : (i===state.candQIndex ? 50 : 0);
+    const color = i===state.candQIndex ? 'var(--teal)' : 'var(--gold)';
+    return `<div class="seg"><i style="width:${filled}%; background:${color}"></i></div>`;
+  }).join('');
+  const scaleHtml = [1,2,3,4,5].map(v =>
+    `<button data-action="cand-answer" data-qid="${q.id}" data-value="${v}" class="${selected===v?'sel':''}">${v}</button>`
+  ).join('');
+
+  const content = `
+    <div class="rail-label">${escapeHtml(state.draftCandidate.name || 'This person')} — question ${state.candQIndex+1} of ${CANDIDATE_QUESTIONS.length}</div>
+    <div class="rail">${railHtml}</div>
+    <div class="panel">
+      <p class="q-cat">${CATEGORIES.find(c=>c.id===q.cat).label}</p>
+      <p class="q-text">${q.text}</p>
+      <div class="scale">${scaleHtml}</div>
+      <div class="scale-labels"><span>${q.low}</span><span>${q.high}</span></div>
+      <div class="btn-row">
+        <button class="btn ghost" data-action="cand-quiz-back">← Back</button>
+        <button class="btn primary" data-action="cand-quiz-next" ${selected===undefined?'disabled':''}>${state.candQIndex===CANDIDATE_QUESTIONS.length-1?'Continue':'Next'}</button>
+      </div>
+    </div>
+  `;
+  appEl.innerHTML = shell(content, 'Comparing a candidate');
+}
+
+function renderCandDealbreakers(){
+  const items = DEALBREAKERS.map(d => {
+    const checked = state.draftCandidate.dealbreakers.includes(d.id);
+    return `<label><input type="checkbox" data-action="toggle-cand-dealbreaker" data-id="${d.id}" ${checked?'checked':''}/><span>${d.text}</span></label>`;
+  }).join('');
+  const content = `
+    <div class="panel">
+      <p class="eyebrow">Last step</p>
+      <h2 class="section-title">Any red flags?</h2>
+      <p class="section-desc">Check anything you've noticed in ${escapeHtml(state.draftCandidate.name || 'this person')} that matches one of your non-negotiables.</p>
+      <div class="check-list">${items}</div>
+      <p class="hint" style="margin-top:18px; margin-bottom:6px;">Anything else worth noting?</p>
+      <input class="text-input" id="candOtherInput" type="text" placeholder="Optional" value="${escapeHtml(state.draftCandidate.dealbreakerOther)}"/>
+      <div class="btn-row">
+        <button class="btn ghost" data-action="cand-dealbreakers-back">← Back</button>
+        <button class="btn primary" data-action="cand-dealbreakers-done">See compatibility →</button>
+      </div>
+    </div>
+  `;
+  appEl.innerHTML = shell(content, 'Comparing a candidate');
+}
+
+function renderCandResult(){
+  const cand = state.candidates.find(c => c.id === state.lastCandidateResultId);
+  if (!cand){ state.view = 'profile'; renderProfile(); return; }
+
+  const idealScores = categoryScores(state.answers);
+  const candScores = candidateCategoryScores(cand.answers);
+  const compat = weightedCompatibility(idealScores, candScores);
+  const radarSvg = buildRadarSVG(CATEGORIES, [
+    {label:'Your Blueprint', color:'#C9A35C', values: idealScores},
+    {label: cand.name || 'Candidate', color:'#5FA8A0', dashed:true, values: candScores}
+  ], 320);
+
+  const violated = DEALBREAKERS.filter(d => state.dealbreakers.includes(d.id) && cand.dealbreakers.includes(d.id));
+
+  const rows = [...CATEGORIES].sort((a,b)=>idealScores[b.id]-idealScores[a.id]).map(c => `
+    <tr>
+      <td>${c.label}</td>
+      <td style="width:26%"><div class="bar-track"><div class="bar-fill" style="width:${idealScores[c.id]}%"></div></div></td>
+      <td style="width:26%"><div class="bar-track"><div class="bar-fill cand" style="width:${candScores[c.id]}%"></div></div></td>
+      <td style="font-family:var(--font-mono); text-align:right;">${candScores[c.id]}</td>
+    </tr>
+  `).join('');
+
+  const dbWarning = violated.length ? `
+    <div class="dealbreaker-flag">
+      <strong>⚠ ${violated.length} non-negotiable${violated.length>1?'s':''} flagged:</strong><br/>
+      ${violated.map(d=>d.text).join('; ')}.<br/>
+      That matters more than the percentage below — a dealbreaker stays a dealbreaker regardless of how well everything else scores.
+    </div>` : '';
+  const otherNote = cand.dealbreakerOther ? `<p class="hint" style="margin-top:14px;">Other note: ${escapeHtml(cand.dealbreakerOther)}</p>` : '';
+
+  const content = `
+    <div class="toolbar">
+      <button class="btn ghost" data-action="back-to-profile">← Back to blueprint</button>
+    </div>
+    <div class="panel">
+      <p class="eyebrow">Compatibility read</p>
+      <h2 class="section-title">${escapeHtml(cand.name || 'This candidate')} <span style="color:var(--teal); font-family:var(--font-mono); font-size:0.85rem; text-transform:uppercase; letter-spacing:0.06em;">${compat}% weighted match</span></h2>
+      <div class="results-grid">
+        <div class="chart-wrap">${radarSvg}</div>
+        <div>
+          <div class="legend" style="justify-content:flex-start;">
+            <span class="legend-item"><span class="swatch" style="background:#C9A35C;"></span>Your blueprint</span>
+            <span class="legend-item"><span class="swatch" style="background:#5FA8A0;"></span>${escapeHtml(cand.name || 'Candidate')}</span>
+          </div>
+          ${dbWarning}
+          ${otherNote}
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <p class="eyebrow">Category breakdown</p>
+      <table class="breakdown">
+        <thead><tr><th>Category</th><th>Your priority</th><th>Their alignment</th><th style="text-align:right;">Score</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="btn-row">
+      <button class="btn ghost" data-action="add-candidate">+ Add another candidate</button>
+      ${state.candidates.length>1?'<button class="btn primary" data-action="compare-all">Compare side by side</button>':''}
+    </div>
+  `;
+  appEl.innerHTML = shell(content, 'Comparing a candidate');
+}
+
+function renderCompare(){
+  const idealScores = categoryScores(state.answers);
+  const palette = ['#5FA8A0','#7C93C9','#B58A5C','#9C7FB0','#7FAE7F','#C97F9C'];
+  const scored = state.candidates.map((cd,i) => {
+    const cs = candidateCategoryScores(cd.answers);
+    return {cd, cs, compat: weightedCompatibility(idealScores, cs), color: palette[i % palette.length]};
+  }).sort((a,b)=> b.compat-a.compat);
+
+  const datasets = [{label:'Your Blueprint', color:'#C9A35C', values: idealScores}];
+  scored.forEach(s => datasets.push({label: s.cd.name || 'Candidate', color: s.color, dashed:true, values: s.cs}));
+  const radarSvg = buildRadarSVG(CATEGORIES, datasets, 360);
+  const legendHtml = datasets.map(d => `<span class="legend-item"><span class="swatch" style="background:${d.color}"></span>${escapeHtml(d.label)}</span>`).join('');
+
+  const rankHtml = scored.map((s,i) => {
+    const violated = DEALBREAKERS.filter(d => state.dealbreakers.includes(d.id) && s.cd.dealbreakers.includes(d.id));
+    return `<div class="rank-row" data-action="view-candidate" data-id="${s.cd.id}" style="cursor:pointer;">
+      <span class="pos">${i+1}.</span>
+      <span class="name">${escapeHtml(s.cd.name || 'Candidate')}${violated.length ? ' <span class="tag rust">'+violated.length+' flag'+(violated.length>1?'s':'')+'</span>' : ''}</span>
+      <span class="score">${s.compat}%</span>
+    </div>`;
+  }).join('');
+
+  const content = `
+    <div class="toolbar">
+      <button class="btn ghost" data-action="back-to-profile">← Back to blueprint</button>
+    </div>
+    <div class="panel">
+      <p class="eyebrow">Side by side</p>
+      <h2 class="section-title">Comparing ${state.candidates.length} candidate${state.candidates.length>1?'s':''}</h2>
+      <div class="chart-wrap">${radarSvg}</div>
+      <div class="legend">${legendHtml}</div>
+    </div>
+    <div class="panel">
+      <p class="eyebrow">Ranked</p>
+      <div class="rank-list">${rankHtml}</div>
+      <div class="btn-row"><button class="btn ghost" data-action="add-candidate">+ Add another candidate</button></div>
+    </div>
+  `;
+  appEl.innerHTML = shell(content, 'Side by side comparison');
+}
+
+/* ====================== EXPORT / IMPORT ====================== */
+
+function exportJSON(){
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    answers: state.answers,
+    dealbreakers: state.dealbreakers,
+    dealbreakerOther: state.dealbreakerOther,
+    candidates: state.candidates,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'partner-blueprint.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ====================== STATE TRANSITIONS ====================== */
+
+function startQuiz(){
+  const firstUnanswered = QUESTIONS.findIndex(q => state.answers[q.id] === undefined);
+  if (firstUnanswered === -1){ state.view = 'dealbreakers'; }
+  else { state.qIndex = firstUnanswered; state.view = 'quiz'; }
+  render();
+}
+
+function resetAll(){
+  state.answers = {};
+  state.dealbreakers = [];
+  state.dealbreakerOther = '';
+  state.qIndex = 0;
+  state.view = 'intro';
+  render();
+}
+
+/* ====================== RENDER DISPATCH ====================== */
+
+const appEl = document.getElementById('app');
+
+function render(){
+  switch(state.view){
+    case 'intro': renderIntro(); break;
+    case 'quiz': renderQuiz(); break;
+    case 'dealbreakers': renderDealbreakers(); break;
+    case 'profile': renderProfile(); break;
+    case 'candIntro': renderCandIntro(); break;
+    case 'candQuiz': renderCandQuiz(); break;
+    case 'candDealbreakers': renderCandDealbreakers(); break;
+    case 'candResult': renderCandResult(); break;
+    case 'compare': renderCompare(); break;
+    default: renderIntro();
+  }
+  bindExtra();
+  window.scrollTo(0,0);
+}
+
+function bindExtra(){
+  const other = document.querySelector('[data-action="other-dealbreaker-input"]');
+  if (other) other.addEventListener('input', e => { state.dealbreakerOther = e.target.value; });
+  const candName = document.getElementById('candNameInput');
+  if (candName) candName.addEventListener('input', e => { state.draftCandidate.name = e.target.value; });
+  const candOther = document.getElementById('candOtherInput');
+  if (candOther) candOther.addEventListener('input', e => { state.draftCandidate.dealbreakerOther = e.target.value; });
+}
+
+/* ====================== EVENT DELEGATION ====================== */
+
+appEl.addEventListener('click', e => {
+  const t = e.target.closest('[data-action]');
+  if (!t) return;
+  const action = t.dataset.action;
+
+  switch(action){
+    case 'start-quiz': startQuiz(); break;
+    case 'retake':
+      if (confirm('Clear your blueprint answers and start over? Saved candidates are kept.')) resetAll();
+      break;
+    case 'quiz-back': state.qIndex = Math.max(0, state.qIndex-1); render(); break;
+    case 'quiz-next':
+      if (state.qIndex === QUESTIONS.length-1) state.view = 'dealbreakers'; else state.qIndex++;
+      render(); break;
+    case 'answer': state.answers[t.dataset.qid] = parseInt(t.dataset.value,10); render(); break;
+    case 'toggle-dealbreaker': {
+      const id = t.dataset.id;
+      const i = state.dealbreakers.indexOf(id);
+      if (i===-1) state.dealbreakers.push(id); else state.dealbreakers.splice(i,1);
+      render(); break;
+    }
+    case 'dealbreakers-back': state.view='quiz'; state.qIndex = QUESTIONS.length-1; render(); break;
+    case 'dealbreakers-done': state.view='profile'; render(); break;
+
+    case 'add-candidate':
+      state.draftCandidate = {id: nextId(), name:'', answers:{}, dealbreakers:[], dealbreakerOther:''};
+      state.candQIndex = 0; state.view = 'candIntro'; render(); break;
+    case 'cancel-candidate': state.draftCandidate = null; state.view = 'profile'; render(); break;
+    case 'start-cand-quiz': state.candQIndex = 0; state.view = 'candQuiz'; render(); break;
+    case 'cand-answer': state.draftCandidate.answers[t.dataset.qid] = parseInt(t.dataset.value,10); render(); break;
+    case 'cand-quiz-back':
+      if (state.candQIndex === 0) state.view = 'candIntro'; else state.candQIndex--;
+      render(); break;
+    case 'cand-quiz-next':
+      if (state.candQIndex === CANDIDATE_QUESTIONS.length-1) state.view = 'candDealbreakers'; else state.candQIndex++;
+      render(); break;
+    case 'toggle-cand-dealbreaker': {
+      const id = t.dataset.id;
+      const arr = state.draftCandidate.dealbreakers;
+      const i = arr.indexOf(id);
+      if (i===-1) arr.push(id); else arr.splice(i,1);
+      render(); break;
+    }
+    case 'cand-dealbreakers-back': state.view='candQuiz'; state.candQIndex = CANDIDATE_QUESTIONS.length-1; render(); break;
+    case 'cand-dealbreakers-done': {
+      state.candidates.push(state.draftCandidate);
+      state.lastCandidateResultId = state.draftCandidate.id;
+      state.draftCandidate = null;
+      state.view = 'candResult';
+      render(); break;
+    }
+    case 'view-candidate': state.lastCandidateResultId = t.dataset.id; state.view = 'candResult'; render(); break;
+    case 'back-to-profile': state.view = 'profile'; render(); break;
+    case 'compare-all': state.view = 'compare'; render(); break;
+
+    case 'export-json': exportJSON(); break;
+    case 'import-json': document.getElementById('importFile').click(); break;
+    default: break;
+  }
+});
+
+document.getElementById('importFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      state.answers = data.answers || {};
+      state.dealbreakers = data.dealbreakers || [];
+      state.dealbreakerOther = data.dealbreakerOther || '';
+      state.candidates = data.candidates || [];
+      state.view = Object.keys(state.answers).length ? 'profile' : 'intro';
+      render();
+    } catch(err){
+      alert('That file could not be read as a blueprint export.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+/* ====================== INIT ====================== */
+
+render();
+</script>
+</body>
+</html>
