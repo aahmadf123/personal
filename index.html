@@ -193,7 +193,7 @@
      [RENDER]     views
      [EXPORT]     JSON export/import + v1→v2 migration
      [EVENTS]     delegation + input binding
-     [BOOT]       init, hydrate, #candidate mode, #selftest
+     [BOOT]       init, hydrate, #selftest
    ========================================================================== */
 
 /* ============================== [CONST] ================================== */
@@ -203,6 +203,14 @@ const SCHEMA_VERSION = 2;
 const IMPORTANCE_WEIGHTS = { irrelevant:0, little:1, somewhat:10, very:50, mandatory:250 };
 const IMPORTANCE_ORDER = ['irrelevant','little','somewhat','very','mandatory'];
 const IMPORTANCE_LABEL = { irrelevant:'Irrelevant', little:'A little', somewhat:'Somewhat', very:'Very', mandatory:'Mandatory' };
+
+// Who the user is looking for — drives all portrait copy. Configurable in settings.
+const SEEKING = {
+  woman:  { noun:'woman',   subj:'she',  subjCap:'She',  pos:'her',   posCap:'Her'  },
+  man:    { noun:'man',     subj:'he',   subjCap:'He',   pos:'his',   posCap:'His'  },
+  person: { noun:'partner', subj:'they', subjCap:'They', pos:'their', posCap:'Their'},
+};
+function seekOf(p){ return SEEKING[(p && p.seeking) || 'woman'] || SEEKING.woman; }
 
 // Reciprocal preference categories (also the first 6 compass axes)
 const RECIP_CATS = [
@@ -363,13 +371,6 @@ const CHECKUP_ITEMS = [
   {id:'conflict',    text:'How well did they handle minor friction or disagreement?'},
 ];
 
-// Legacy quick-rate fallback (one alignment slider per reciprocal category)
-const QUICK_QUESTIONS = RECIP_CATS.map(c => ({
-  id:'quick_'+c.id, cat:c.id,
-  text:'Based on what you know about them, how well does this person align with your priorities around '+c.label.toLowerCase()+'?',
-  low:'Not aligned', high:'Strongly aligned'
-}));
-
 /* =============================== [ENGINE] =============================== */
 
 const R7 = x => 8 - x;                       // reverse a 1..7 item
@@ -431,67 +432,7 @@ function passesDealbreakers(self, cand){
   return { pass: failed.length===0, failed };
 }
 
-// Tier 2 — reciprocal geometric match
-function calculateReciprocalMatch(self, cand){
-  let earnA=0,possA=0,earnB=0,possB=0,shared=0;
-  const A = self.responses||{}, B = cand.responses||{};
-  Object.keys(A).filter(k=> k in B).forEach(k=>{
-    const a=A[k], b=B[k]; if (a.answer==null||b.answer==null) return;
-    shared++;
-    const wA = IMPORTANCE_WEIGHTS[a.importance]||0, wB = IMPORTANCE_WEIGHTS[b.importance]||0;
-    if (wA>0){ possA+=wA; if ((a.preferred||[]).includes(b.answer)) earnA+=wA; }
-    if (wB>0){ possB+=wB; if ((b.preferred||[]).includes(a.answer)) earnB+=wB; }
-  });
-  const sA = possA>0 ? earnA/possA : 1;
-  const sB = possB>0 ? earnB/possB : 1;
-  return { shared, aToB:Math.round(sA*100), bToA:Math.round(sB*100), mutualMatch:Math.round(Math.sqrt(sA*sB)*100) };
-}
-
-// Tier 3 — TOPSIS ranking. criteria:[{key,type,weight}]; rows:[{id,values:{}}]
-function rankTOPSIS(rows, criteria){
-  const m = rows.length; if (!m) return [];
-  const keys = criteria.map(c=>c.key);
-  const wsum = criteria.reduce((s,c)=>s+c.weight,0)||1;
-  const w={}; criteria.forEach(c=> w[c.key]=c.weight/wsum);
-  const norm={}; keys.forEach(k=>{ const ss=Math.sqrt(rows.reduce((s,r)=>s+(r.values[k]||0)**2,0)); norm[k]=ss>0?ss:1; });
-  const V = rows.map(r=>{ const v={}; keys.forEach(k=> v[k]=(r.values[k]||0)/norm[k]*w[k]); return v; });
-  const pis={},nis={};
-  criteria.forEach(c=>{ const col=V.map(v=>v[c.key]); const mx=Math.max(...col),mn=Math.min(...col);
-    if(c.type==='benefit'){pis[c.key]=mx;nis[c.key]=mn;}else{pis[c.key]=mn;nis[c.key]=mx;} });
-  return rows.map((r,i)=>{ let dP=0,dM=0; keys.forEach(k=>{dP+=(V[i][k]-pis[k])**2; dM+=(V[i][k]-nis[k])**2;});
-    dP=Math.sqrt(dP);dM=Math.sqrt(dM); const c=(dP+dM)>0?dM/(dP+dM):0;
-    return {id:r.id, closeness:Math.round(c*100)}; }).sort((a,b)=>b.closeness-a.closeness);
-}
-
-// TOPSIS criteria vector for a candidate relative to the user
-function topsisCriteria(){
-  return [
-    {key:'match',       type:'benefit', weight:3},
-    {key:'agreeable',   type:'benefit', weight:1.5},
-    {key:'stable',      type:'benefit', weight:1.5},
-    {key:'values',      type:'benefit', weight:1.5},
-    {key:'finance',     type:'benefit', weight:1},
-    {key:'anxiety',     type:'cost',    weight:1},
-    {key:'avoidance',   type:'cost',    weight:1},
-    {key:'volatility',  type:'cost',    weight:1.5},
-  ];
-}
-function topsisRow(self, cand){
-  const r = calculateReciprocalMatch(self, cand);
-  const bf = cand.derived && cand.derived.bigFive;
-  const att = cand.derived && cand.derived.attachment;
-  const g = cand.derived && cand.derived.gottman;
-  return { id:cand.id, values:{
-    match: r.mutualMatch,
-    agreeable: bf ? bf.A/7*100 : 50,
-    stable: bf ? bf.ES/7*100 : 50,
-    values: categorySatisfaction(self, cand, 'values'),
-    finance: categorySatisfaction(self, cand, 'finance'),
-    anxiety: att ? att.anxiety/7*100 : 50,
-    avoidance: att ? att.avoidance/7*100 : 50,
-    volatility: g ? (g.criticism+g.defensiveness+g.stonewalling)/3*100 : 40,
-  }};
-}
+// (The single-directional "fit to your ideal" score lives in [PROFILE] as fitToIdeal().)
 
 /* =============================== [PROFILE] ============================= */
 
@@ -501,6 +442,8 @@ function nextId(){ return 'c'+(idCounter++)+'_'+Date.now().toString(36); }
 
 function emptyProfile(id, source){
   return { schemaVersion:SCHEMA_VERSION, id:id||'self', name:'', source:source||'self',
+    seeking: null,                    // only meaningful on the 'self' profile; null → first-run picker, copy defaults to 'woman'
+    attachmentStyle: null,            // only used on tested people ('read'): your quick read of them
     createdAt:nowISO(), updatedAt:nowISO(),
     responses:{}, tipiRaw:{}, ecrRaw:{}, gottmanRaw:{},
     derived:{}, dealbreakers:{}, nonNegotiable:{}, dealbreakerOther:'', checkups:[] };
@@ -555,15 +498,6 @@ function profileAxisScores(profile){
   out.attachment = attachmentSecurityAxis(profile) ?? 0;
   return out;
 }
-// candidate polygon = satisfaction on reciprocal axes + candidate's own psychometrics
-function candidateAxisScores(self, cand){
-  const out={};
-  RECIP_CATS.forEach(c=> out[c.id]=categorySatisfaction(self,cand,c.id));
-  out.personality = personalityAxis(cand) ?? 0;
-  out.attachment = attachmentSecurityAxis(cand) ?? 0;
-  return out;
-}
-
 // attachment pairing heuristic
 const ATTACH_LABEL = {secure:'Secure', anxious:'Anxious-Preoccupied', dismissive:'Dismissive-Avoidant', fearful:'Fearful-Avoidant'};
 function attachmentPairing(a, b){
@@ -586,8 +520,57 @@ function isComplete(profile, moduleId){
     default: return RECIP_BY_CAT[moduleId] ? RECIP_BY_CAT[moduleId].every(i=> profile.responses[i.id] && profile.responses[i.id].answer!=null) : true;
   }
 }
-const FULL_MODULES = [...RECIP_CATS.map(c=>c.id), 'tipi','ecr','gottman'];
+const FULL_MODULES = [...RECIP_CATS.map(c=>c.id), 'tipi','ecr','gottman'];      // the self questionnaire
+const READ_MODULES = RECIP_CATS.map(c=>c.id);                                    // "your read on her" — reciprocal only
+function flowModules(flow){ return flow && flow.kind==='read' ? READ_MODULES : FULL_MODULES; }
 function profileHasFullData(p){ return FULL_MODULES.every(m=> isComplete(p,m)); }
+
+/* ---- IDEAL PARTNER: derived from the user's answers alone ---- */
+const IDEAL_ATT_RATIONALE = {
+  secure:'someone secure like you — steady, direct, and at ease with closeness, so the relationship stays a calm home base.',
+  anxious:'someone secure, whose steady reassurance and consistency quiet the part of you that watches for distance.',
+  dismissive:'someone secure who is comfortable with the independence you value and never reads space as rejection.',
+  fearful:'someone secure and patient, who offers safety without pressure so closeness stops feeling risky.',
+};
+const STYLE_COORDS = { secure:{anxiety:2,avoidance:2}, anxious:{anxiety:5.5,avoidance:2}, dismissive:{anxiety:2,avoidance:5.5}, fearful:{anxiety:5.5,avoidance:5.5} };
+const ARCH_ADJ = { values:'Devoted Partner', communication:'Open Communicator', affection:'Affectionate Companion', lifestyle:'Kindred Spirit', meaning:'Life Builder', finance:'Grounded Planner' };
+
+function deriveIdealPartner(self){
+  const cats={};
+  RECIP_CATS.forEach(c=>{
+    let lvlSum=0, wSum=0; const wants=[];
+    RECIP_BY_CAT[c.id].forEach(it=>{
+      const r=self.responses[it.id]; if(!r || !r.preferred || !r.preferred.length) return;
+      const w=IMPORTANCE_WEIGHTS[r.importance]!=null ? Math.max(1, IMPORTANCE_WEIGHTS[r.importance]) : 1;
+      lvlSum += Math.max(...r.preferred.map(v=>normAnswer(it,v))) * w; wSum += w;
+      r.preferred.forEach(v=>{ const o=it.options.find(x=>x[0]===v); if(o && !wants.includes(o[1])) wants.push(o[1]); });
+    });
+    cats[c.id] = { score: wSum>0?Math.round(lvlSum/wSum):0, wants };
+  });
+  const myAtt = self.derived && self.derived.attachment;
+  const attachment = { style:'secure', anxiety:2, avoidance:2, rationale: IDEAL_ATT_RATIONALE[myAtt?myAtt.style:'secure'] };
+  const myBf = self.derived && self.derived.bigFive;
+  const bigFive = { A:6.2, ES:6.2, C: myBf?Math.max(5, myBf.C):5.5, O: myBf?myBf.O:4.5, E: myBf?myBf.E:4.5 };
+  const dealbreakers={}; DEALBREAKERS.forEach(d=>{ if(self.nonNegotiable && self.nonNegotiable[d.id]) dealbreakers[d.id]=self.dealbreakers[d.id]; });
+  const topCat = RECIP_CATS.map(c=>({id:c.id,s:cats[c.id].score})).sort((a,b)=>b.s-a.s)[0];
+  const archetype = 'The Secure ' + (ARCH_ADJ[topCat.id] || 'Companion');
+  const axisScores={}; RECIP_CATS.forEach(c=> axisScores[c.id]=cats[c.id].score);
+  axisScores.personality = Math.round((mean([bigFive.A,bigFive.C,bigFive.ES,bigFive.O])-1)/6*100);
+  axisScores.attachment  = Math.round((7 - mean([attachment.anxiety,attachment.avoidance]) -1)/6*100);
+  return { seek: seekOf(self), cats, attachment, bigFive, dealbreakers, archetype, axisScores };
+}
+// One-directional "fit to your ideal": how well her answers satisfy what you want (importance-weighted)
+function fitToIdeal(self, her){
+  let earn=0, poss=0, hit=0, n=0;
+  RECIP_ITEMS.forEach(it=>{
+    const a=self.responses[it.id], b=her.responses ? her.responses[it.id] : null;
+    if(!a || !b || a.answer==null || b.answer==null) return;
+    const w=IMPORTANCE_WEIGHTS[a.importance]||0; const ok=(a.preferred||[]).includes(b.answer);
+    n++; if(ok) hit++; if(w>0){ poss+=w; if(ok) earn+=w; }
+  });
+  if(poss>0) return Math.round(earn/poss*100);
+  return n>0?Math.round(hit/n*100):0;
+}
 
 /* =============================== [CHARTS] ============================== */
 
@@ -749,60 +732,94 @@ function setView(v){ state.view=v; render(); window.scrollTo(0,0); }
 /* ---- intro ---- */
 function renderIntro(){
   const has = profileHasAnyData(state.self);
+  const seek = seekOf(state.self);
   const content = `
     <div class="panel intro">
       <p class="eyebrow">Partner Blueprint</p>
-      <h2>Engineer what you're actually looking for — then test it against someone real.</h2>
-      <p>A private, science-informed compatibility engine. You'll answer six modules — values, communication, affection &amp; lifestyle, shared meaning &amp; finances, personality (Big&nbsp;Five / TIPI), and attachment &amp; conflict style (ECR-S / Gottman) — plus your hard non-negotiables.</p>
+      <h2>Discover the ideal ${seek.noun} for you.</h2>
+      <p>A private, science-informed portrait built from <em>your</em> answers alone — no one else has to participate. You'll answer six short modules about yourself and what you want (values, communication, affection &amp; lifestyle, shared meaning &amp; finances), plus validated personality (Big&nbsp;Five / TIPI) and attachment &amp; conflict-style (ECR-S / Gottman) measures, and your hard non-negotiables.</p>
       <ul>
-        <li><span class="num">01</span><span>Build your blueprint: your answers, what you'd accept in a partner, and how much each matters.</span></li>
-        <li><span class="num">02</span><span>Get a written profile, an 8-axis compass, your attachment quadrant, and conflict-style read.</span></li>
-        <li><span class="num">03</span><span>Add candidates — import their own questionnaire for a true reciprocal match, rank them with a dealbreaker gate + TOPSIS, and log post-date check-ins.</span></li>
+        <li><span class="num">01</span><span>Answer about yourself and what you're looking for in a partner.</span></li>
+        <li><span class="num">02</span><span>Get a portrait of your ideal ${seek.noun}: ${seek.pos} values, personality, attachment style, an archetype, and an 8-axis compass.</span></li>
+        <li><span class="num">03</span><span>Optional: size up someone real — you answer about ${seek.pos === 'their' ? 'them' : seek.subj} — and see how well ${seek.subj} fit${seek.subj==='they'?'':'s'} your ideal.</span></li>
       </ul>
-      <p class="hint">Everything stays on this device. Turn on passphrase encryption to protect it at rest, and export an encrypted backup you keep yourself.</p>
+      <p class="hint">Everything stays on this device. Turn on passphrase encryption to protect it at rest, and export a backup you keep yourself. This is a self-reflection tool, not clinical advice.</p>
       <div class="btn-row">
         <button class="btn primary" data-action="start-self">${has?'Continue':'Begin'} →</button>
         <button class="btn ghost" data-action="import-json">Import a saved blueprint</button>
         <button class="btn ghost" data-action="settings">Privacy &amp; data</button>
       </div>
     </div>`;
-  appEl.innerHTML = shell(content, 'A compatibility engine');
+  appEl.innerHTML = shell(content, 'Find your ideal partner');
 }
 function profileHasAnyData(p){ return Object.keys(p.responses).length>0 || Object.keys(p.tipiRaw).length>0; }
 
-/* ---- module quiz (shared by self / proxy / candidate mode) ---- */
+/* ---- who are you looking for? (first-run) ---- */
+function renderSeeking(){
+  const cur = state.self.seeking || 'woman';
+  const opt = (v,label,desc)=>`<button class="choice-card" data-action="set-seeking" data-v="${v}" style="${cur===v?'border-color:var(--gold);':''}"><h4>${label}</h4><p>${desc}</p></button>`;
+  const content = `
+    <div class="panel">
+      <p class="eyebrow">First, one quick thing</p>
+      <h2 class="section-title">Who are you looking for?</h2>
+      <p class="section-desc">This only tailors the wording of your results (she/he/they). You can change it any time in settings.</p>
+      <div class="choice-cards">
+        ${opt('woman','A woman','Your results will describe "the ideal woman for you" (she / her).')}
+        ${opt('man','A man','Your results will describe "the ideal man for you" (he / his).')}
+        ${opt('person','A partner','Gender-neutral wording throughout (they / their).')}
+      </div>
+    </div>`;
+  appEl.innerHTML = shell(content, 'Find your ideal partner');
+}
+
+/* ---- module quiz (shared by the self flow and the "your read on her" flow) ---- */
 function renderModule(){
   const f = state.flow, p = f.profile;
-  const modId = FULL_MODULES[f.moduleIndex];
-  const railHtml = FULL_MODULES.map((m,i)=>{
+  const mods = flowModules(f);
+  const isSelf = f.kind==='self';
+  const modId = mods[f.moduleIndex];
+  const railHtml = mods.map((m,i)=>{
     const pct = isComplete(p,m)?100:(i===f.moduleIndex?40:0);
     const color = i===f.moduleIndex?'var(--teal)':'var(--gold)';
     return `<div class="seg"><i style="width:${pct}%; background:${color}"></i></div>`;
   }).join('');
   let body, title;
-  if (RECIP_BY_CAT[modId]){ title=RECIP_CATS.find(c=>c.id===modId).label; body=renderRecipModule(modId, p); }
+  if (RECIP_BY_CAT[modId]){ title=RECIP_CATS.find(c=>c.id===modId).label; body=renderRecipModule(modId, p, isSelf); }
   else if (modId==='tipi'){ title='Personality (Big Five)'; body=renderLikertModule(TIPI_ITEMS, p.tipiRaw, 'tipi', 7, 'Disagree strongly','Agree strongly','I see myself as…'); }
   else if (modId==='ecr'){ title='Attachment'; body=renderLikertModule(ECR_ITEMS, p.ecrRaw, 'ecr', 7, 'Disagree strongly','Agree strongly','How true is each statement for you?'); }
   else if (modId==='gottman'){ title='Conflict style'; body=renderGottmanModule(p); }
-  const who = f.kind==='self' ? 'Your blueprint' : (escapeHtml(p.name||'This person'));
-  const last = f.moduleIndex===FULL_MODULES.length-1;
+  const who = isSelf ? 'Your blueprint' : (escapeHtml(p.name||'This person'));
+  const last = f.moduleIndex===mods.length-1;
+  const nextLabel = last ? (isSelf ? 'Continue to non-negotiables' : 'Continue') : 'Next module';
   const content = `
-    <div class="rail-label">${who} — module ${f.moduleIndex+1} of ${FULL_MODULES.length}: ${title}</div>
+    <div class="rail-label">${who} — module ${f.moduleIndex+1} of ${mods.length}: ${title}</div>
     <div class="rail">${railHtml}</div>
     <div class="panel">
       ${body}
       <div class="btn-row">
         <button class="btn ghost" data-action="mod-back">← Back</button>
-        <button class="btn primary" data-action="mod-next" ${isComplete(p,modId)?'':'disabled'}>${last?'Continue to non-negotiables':'Next module'}</button>
+        <button class="btn primary" data-action="mod-next" ${isComplete(p,modId)?'':'disabled'}>${nextLabel}</button>
       </div>
       ${!isComplete(p,modId)?'<p class="hint" style="margin-top:12px;">Answer every item to continue.</p>':''}
     </div>`;
-  appEl.innerHTML = shell(content, f.kind==='candidate'?'Candidate questionnaire':'Building the blueprint');
+  appEl.innerHTML = shell(content, isSelf?'Building your blueprint':'Your read on '+escapeHtml(p.name||'them'));
 }
 
-function renderRecipModule(catId, p){
+function renderRecipModule(catId, p, isSelf){
   const items = RECIP_BY_CAT[catId];
-  return `<p class="section-desc">For each, give your own answer, mark which answers you'd accept in a partner, and how much it matters.</p>` +
+  const seek = seekOf(state.self);
+  if (!isSelf){
+    // "Your read on her" — only her own answer per item, no preferences/importance.
+    return `<p class="section-desc">Your best read on ${escapeHtml(p.name||seek.subj)} — how would ${seek.subj} answer each? (Skip nothing; estimate if unsure.)</p>` +
+      items.map(it=>{
+        const r = p.responses[it.id] || {answer:null};
+        const ans = it.options.map(([v,l])=>`<button data-action="recip-answer" data-id="${it.id}" data-v="${v}" class="${r.answer===v?'sel':''}">${escapeHtml(l)}</button>`).join('');
+        return `<div class="item"><p class="q-text">${escapeHtml(it.text)}</p>
+          <div class="sub-label">${escapeHtml((p.name||seek.subjCap))}'s answer</div><div class="opts">${ans}</div></div>`;
+      }).join('');
+  }
+  const lookIn = seek.noun==='woman' ? 'her' : seek.noun==='man' ? 'him' : 'a partner';
+  return `<p class="section-desc">For each: where <em>you</em> stand, what you're looking for in ${lookIn} (defaults to matching you — adjust if you want something different), and how much it matters.</p>` +
     items.map(it=>{
       const r = p.responses[it.id] || {answer:null, preferred:[], importance:'somewhat'};
       const ans = it.options.map(([v,l])=>`<button data-action="recip-answer" data-id="${it.id}" data-v="${v}" class="${r.answer===v?'sel':''}">${escapeHtml(l)}</button>`).join('');
@@ -810,9 +827,9 @@ function renderRecipModule(catId, p){
       const imp = IMPORTANCE_ORDER.map(k=>`<button data-action="recip-imp" data-id="${it.id}" data-k="${k}" class="${r.importance===k?'sel':''}">${IMPORTANCE_LABEL[k]}</button>`).join('');
       return `<div class="item">
         <p class="q-text">${escapeHtml(it.text)}</p>
-        <div class="sub-label">Your answer</div><div class="opts">${ans}</div>
-        <div class="sub-label">You'd accept a partner who answers</div><div class="opts accept">${acc}</div>
-        <div class="sub-label">How much this matters in a partner</div><div class="imp">${imp}</div>
+        <div class="sub-label">You</div><div class="opts">${ans}</div>
+        <div class="sub-label">In ${lookIn}, you're looking for</div><div class="opts accept">${acc}</div>
+        <div class="sub-label">How much this matters</div><div class="imp">${imp}</div>
       </div>`;
     }).join('');
 }
@@ -846,39 +863,51 @@ function renderDealbreakers(){
       <h2 class="section-title">Non-negotiables</h2>
       <p class="section-desc">${f.kind==='self'
         ? 'Answer each, and check <strong>Dealbreaker</strong> for any where a mismatch would end things outright — regardless of how well everything else scores.'
-        : 'Answer each as best you know for '+escapeHtml(p.name||'this person')+'.'}</p>
+        : 'Your best read on '+escapeHtml(p.name||'this person')+' for each.'}</p>
       ${rows}
-      <p class="sub-label" style="margin-top:20px;">Anything else that's a hard line?</p>
+      <p class="sub-label" style="margin-top:20px;">${f.kind==='self'?"Anything else that's a hard line?":'Anything else worth noting?'}</p>
       <input class="text-input" id="dbOther" type="text" placeholder="Optional note" value="${escapeHtml(p.dealbreakerOther)}"/>
       <div class="btn-row">
         <button class="btn ghost" data-action="db-back">← Back</button>
-        <button class="btn primary" data-action="db-done">${f.kind==='candidate'?'Finish & export →':(f.kind==='proxy'?'See compatibility →':'See my blueprint →')}</button>
+        <button class="btn primary" data-action="db-done">${f.kind==='read'?'See the fit →':'See your ideal →'}</button>
       </div>
     </div>`;
   appEl.innerHTML = shell(content, 'Non-negotiables');
 }
 
-/* ---- self profile / results ---- */
+/* ---- primary result: "Your ideal partner" portrait ---- */
 function renderProfile(){
   const p = state.self; deriveAll(p);
-  const axes = profileAxisScores(p);
-  const radar = buildRadarSVG(COMPASS_AXES, [{color:'#C9A35C', values:axes}], 340);
-  const att = p.derived.attachment;
-  const g = p.derived.gottman;
+  const seek = seekOf(p);
+  const ideal = deriveIdealPartner(p);
   const complete = profileHasFullData(p);
 
-  const catRows = [...RECIP_CATS].sort((a,b)=>axes[b.id]-axes[a.id]).map(c=>`
-    <tr><td>${c.label}</td><td style="width:45%"><div class="bar-track"><div class="bar-fill" style="width:${axes[c.id]}%"></div></div></td>
-    <td style="font-family:var(--font-mono); text-align:right;">${axes[c.id]}</td></tr>`).join('');
+  // 8-axis compass: her ideal vector (gold) overlaid with your own profile (teal, for context)
+  const radar = buildRadarSVG(COMPASS_AXES, [
+    {color:'#C9A35C', values: ideal.axisScores},
+    {color:'#5FA8A0', dashed:true, values: profileAxisScores(p)},
+  ], 340);
 
-  const psychHtml = complete ? renderSelfPsych(p) : `<div class="note-banner">Complete all modules to unlock your Big Five, attachment quadrant, and conflict-style read. <button class="btn ghost sm" data-action="start-self">Finish modules</button></div>`;
+  // attachment: her ideal (secure) + you, with the pairing rationale
+  const quadPoints = [{att: ideal.attachment, color:'#C9A35C', label:'Her'}];
+  if (p.derived.attachment) quadPoints.push({att:p.derived.attachment, color:'#5FA8A0', label:'You'});
+  const quad = buildAttachmentQuadrant(quadPoints, 300);
+
+  const traitRow=(k,v,note)=>`<tr><td>${k}</td><td style="width:45%"><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/7*100)}%"></div></div></td><td style="font-family:var(--font-mono);text-align:right;">${note}</td></tr>`;
+  const bfRows = `${traitRow('Warmth (agreeableness)', ideal.bigFive.A,'high')}${traitRow('Emotional stability', ideal.bigFive.ES,'high')}${traitRow('Conscientiousness', ideal.bigFive.C, ideal.bigFive.C>=5.5?'high':'moderate')}${traitRow('Openness', ideal.bigFive.O,'~ yours')}${traitRow('Extraversion', ideal.bigFive.E,'~ yours')}`;
+
+  const wantsHtml = RECIP_CATS.map(c=>{
+    const w = ideal.cats[c.id].wants.slice(0,3);
+    return w.length ? `<tr><td>${c.label}</td><td>${w.map(x=>`<span class="tag teal">${escapeHtml(x)}</span>`).join(' ')}</td></tr>` : '';
+  }).join('');
 
   const dbChosen = DEALBREAKERS.filter(d=> p.nonNegotiable[d.id]);
-  const dbHtml = dbChosen.length||p.dealbreakerOther
-    ? `<div style="margin-top:14px;">`+dbChosen.map(d=>`<span class="tag rust">${DB_LABEL[d.id]}: ${escapeHtml((d.options.find(o=>o[0]===p.dealbreakers[d.id])||[])[1]||'—')}</span>`).join('')+(p.dealbreakerOther?`<span class="tag rust">${escapeHtml(p.dealbreakerOther)}</span>`:'')+`</div>`
-    : `<p class="hint" style="margin-top:12px;">No hard non-negotiables flagged.</p>`;
+  const dbHtml = dbChosen.length
+    ? `<div style="margin-top:6px;">`+dbChosen.map(d=>`<span class="tag rust">${DB_LABEL[d.id]}: ${escapeHtml((d.options.find(o=>o[0]===p.dealbreakers[d.id])||[])[1]||'—')}</span>`).join('')+(p.dealbreakerOther?`<span class="tag rust">${escapeHtml(p.dealbreakerOther)}</span>`:'')+`</div>`
+    : `<p class="hint">No hard non-negotiables set — nothing is auto-excluded.</p>`;
 
-  const candListHtml = renderCandidateList();
+  const incomplete = complete ? '' : `<div class="note-banner">Finish the personality &amp; attachment modules to complete ${seek.pos} psychological portrait. <button class="btn ghost sm" data-action="start-self">Finish modules</button></div>`;
+  const aboutYou = complete ? `<div class="panel"><p class="eyebrow">About you (for reference)</p>${renderSelfPsych(p)}</div>` : '';
 
   const content = `
     <div class="toolbar">
@@ -888,22 +917,49 @@ function renderProfile(){
       <button class="btn ghost sm" data-action="retake">Retake</button>
     </div>
     <div class="panel">
-      <p class="eyebrow">Your blueprint</p>
-      <h2 class="section-title">What you're actually looking for</h2>
+      <p class="eyebrow">Your ideal ${seek.noun} — ${escapeHtml(ideal.archetype)}</p>
+      <h2 class="section-title">The ideal ${seek.noun} for you</h2>
+      ${incomplete}
       <div class="results-grid">
         <div class="chart-wrap">${radar}</div>
-        <div class="profile-text">${generateProfileText(p)}</div>
+        <div class="profile-text">${generateIdealText(p, ideal)}</div>
       </div>
-      ${dbHtml}
+      <div class="legend"><span class="legend-item"><span class="swatch" style="background:#C9A35C"></span>${seek.posCap} ideal profile</span><span class="legend-item"><span class="swatch" style="background:#5FA8A0"></span>You</span></div>
     </div>
-    <div class="panel"><p class="eyebrow">Category emphasis</p><table class="breakdown"><tbody>${catRows}</tbody></table></div>
-    <div class="panel"><p class="eyebrow">Psychometrics</p>${psychHtml}</div>
     <div class="panel">
-      <p class="eyebrow">Candidates</p>
-      <p class="section-desc">Add someone to run the dealbreaker gate, reciprocal match, and TOPSIS ranking. For a true mutual score, have them fill their own questionnaire and import it.</p>
-      ${candListHtml}
-    </div>`;
-  appEl.innerHTML = shell(content, 'Your blueprint');
+      <p class="eyebrow">What ${seek.subj} ${seek.subj==='they'?'are':'is'} like</p>
+      <div class="results-grid">
+        <div>
+          <div class="sub-label">Temperament (auto-derived to fit you)</div>
+          <table class="breakdown"><tbody>${bfRows}</tbody></table>
+        </div>
+        <div>
+          <div class="sub-label">Attachment — Secure (recommended)</div>
+          <div class="chart-wrap">${quad}</div>
+          <p class="hint" style="text-align:center;">${escapeHtml(ideal.attachment.rationale)}</p>
+        </div>
+      </div>
+    </div>
+    <div class="panel"><p class="eyebrow">What you're looking for</p><table class="breakdown"><tbody>${wantsHtml||'<tr><td class="hint">Complete the value/lifestyle modules to populate this.</td></tr>'}</tbody></table></div>
+    <div class="panel"><p class="eyebrow">Her must-haves (your non-negotiables)</p>${dbHtml}</div>
+    <div class="panel">
+      <p class="eyebrow">Size up someone real</p>
+      <p class="section-desc">Considering a specific person? You answer a few questions about ${seek.pos==='their'?'them':seek.subj} — ${seek.subj} never has to participate — and see how well ${seek.subj} fit${seek.subj==='they'?'':'s'} this ideal, with the same dealbreaker gate.</p>
+      ${renderCandidateList()}
+    </div>
+    ${aboutYou}`;
+  appEl.innerHTML = shell(content, 'Your ideal '+seek.noun);
+}
+function generateIdealText(self, ideal){
+  const seek = ideal.seek;
+  const ranked = RECIP_CATS.map(c=>({c, s:ideal.cats[c.id].score})).sort((a,b)=>b.s-a.s);
+  const top=ranked[0].c, second=ranked[1].c;
+  const topWants = ideal.cats[top.id].wants.slice(0,2);
+  let p1 = `The ideal ${seek.noun} for you leans most into <strong>${top.label.toLowerCase()}</strong> and <strong>${second.label.toLowerCase()}</strong>`;
+  p1 += topWants.length ? ` — someone who reads as "${topWants.map(w=>escapeHtml(w.toLowerCase())).join('" and "')}".` : '.';
+  let p2 = `In how ${seek.subj} connect${seek.subj==='they'?'':'s'} and handle${seek.subj==='they'?'':'s'} conflict, ${seek.subj} ${seek.subj==='they'?'are':'is'} ${ideal.attachment.rationale}`;
+  let p3 = `Temperamentally, what matters most is <strong>warmth</strong> and <strong>emotional steadiness</strong> — ${seek.subj} ${seek.subj==='they'?'are':'is'} agreeable and calm under stress, and share${seek.subj==='they'?'':'s'} your level of openness and social energy. (This describes who ${seek.subj} ${seek.subj==='they'?'are':'is'}, not how ${seek.subj} look${seek.subj==='they'?'':'s'}.)`;
+  return [p1,p2,p3].map(x=>`<p>${x}</p>`).join('');
 }
 function renderSelfPsych(p){
   const bf=p.derived.bigFive, att=p.derived.attachment, g=p.derived.gottman;
@@ -929,149 +985,119 @@ function renderSelfPsych(p){
 
 function renderCandidateList(){
   const self = state.self;
+  const seek = seekOf(self);
   if (!state.candidates.length){
-    return `<div class="empty-state" style="padding:20px;"><p>No candidates yet.</p></div>
-      <div class="btn-row" style="justify-content:center;"><button class="btn primary" data-action="add-candidate">+ Add a candidate</button></div>`;
+    return `<div class="empty-state" style="padding:20px;"><p>No one added yet.</p></div>
+      <div class="btn-row" style="justify-content:center;"><button class="btn primary" data-action="add-candidate">+ Size up someone</button></div>`;
   }
   const gated = state.candidates.map(c=>({c, gate:passesDealbreakers(self, c)}));
-  const survivors = gated.filter(x=>x.gate.pass).map(x=>x.c);
+  const surv = gated.filter(x=>x.gate.pass).map(x=>x.c).sort((a,b)=> fitToIdeal(self,b)-fitToIdeal(self,a));
   const excluded = gated.filter(x=>!x.gate.pass);
-  let rankIds = survivors.map(c=>c.id);
-  if (survivors.length>=2){
-    rankIds = rankTOPSIS(survivors.map(c=>topsisRow(self,c)), topsisCriteria()).map(r=>r.id);
-  } else if (survivors.length===1){
-    rankIds = [survivors[0].id];
-  }
-  const rankRows = rankIds.map((id,i)=>{
-    const c = survivors.find(x=>x.id===id);
-    const m = c.source==='quick' ? quickCompat(self,c) : calculateReciprocalMatch(self,c).mutualMatch;
-    const badge = c.source==='quick'?'<span class="tag">quick</span>':(c.source==='proxy'?'<span class="tag">proxy</span>':'');
-    return `<div class="rank-row" data-action="view-candidate" data-id="${id}" style="cursor:pointer;">
-      <span class="pos">${i+1}.</span><span class="name">${escapeHtml(c.name||'Candidate')} ${badge}</span><span class="score">${m}%</span></div>`;
-  }).join('');
+  const rankRows = surv.map((c,i)=>`<div class="rank-row" data-action="view-candidate" data-id="${c.id}" style="cursor:pointer;">
+      <span class="pos">${i+1}.</span><span class="name">${escapeHtml(c.name||'Someone')}</span><span class="score">${fitToIdeal(self,c)}%</span></div>`).join('');
   const exclRows = excluded.map(x=>`<div class="rank-row excluded" data-action="view-candidate" data-id="${x.c.id}" style="cursor:pointer;">
-      <span class="pos">✕</span><span class="name">${escapeHtml(x.c.name||'Candidate')} <span class="tag rust">${x.gate.failed.map(f=>DB_LABEL[f]||f).join(', ')}</span></span><span class="score" style="color:var(--rust)">excluded</span></div>`).join('');
-  return `${survivors.length?`<div class="sub-label">Ranked${survivors.length>=2?' by TOPSIS closeness':' by reciprocal match'}</div><div class="rank-list">${rankRows}</div>`:''}
+      <span class="pos">✕</span><span class="name">${escapeHtml(x.c.name||'Someone')} <span class="tag rust">${x.gate.failed.map(f=>DB_LABEL[f]||f).join(', ')}</span></span><span class="score" style="color:var(--rust)">excluded</span></div>`).join('');
+  return `${surv.length?`<div class="sub-label">Ranked by fit to your ideal</div><div class="rank-list">${rankRows}</div>`:''}
     ${excluded.length?`<div class="sub-label" style="margin-top:18px; color:var(--rust);">Excluded by non-negotiables</div><div class="rank-list">${exclRows}</div>`:''}
-    <div class="btn-row"><button class="btn ghost" data-action="add-candidate">+ Add candidate</button>${survivors.length>=2?'<button class="btn ghost" data-action="compare-all">Compare compass</button>':''}</div>`;
-}
-function quickCompat(self, cand){
-  // legacy linear weighted average over reciprocal-category emphasis vs quick alignment sliders
-  const ideal = categoryScores(self); let num=0,den=0;
-  RECIP_CATS.forEach(c=>{ const w=ideal[c.id]; const a=cand.quick && cand.quick[c.id]!=null ? Math.round((cand.quick[c.id]-1)/4*100):0; num+=w*a; den+=w; });
-  return den>0?Math.round(num/den):0;
+    <div class="btn-row"><button class="btn ghost" data-action="add-candidate">+ Size up someone</button>${surv.length>=2?'<button class="btn ghost" data-action="compare-all">Compare compass</button>':''}</div>`;
 }
 
-/* ---- add-candidate chooser ---- */
-function renderAddChoice(){
-  const content = `
-    <div class="panel">
-      <p class="eyebrow">New candidate</p>
-      <h2 class="section-title">How do you want to add them?</h2>
-      <div class="choice-cards">
-        <button class="choice-card" data-action="add-import"><h4>Import their questionnaire &nbsp;·&nbsp; best</h4><p>They fill out their own Partner Blueprint on their device and send you the file. Unlocks true reciprocal matching, TOPSIS ranking, and their attachment quadrant.</p></button>
-        <button class="choice-card" data-action="add-proxy"><h4>Answer as them &nbsp;·&nbsp; proxy estimate</h4><p>You fill the modules on their behalf. Full engine, flagged lower-confidence.</p></button>
-        <button class="choice-card" data-action="add-quick"><h4>Quick estimate</h4><p>Rate their alignment on six sliders. Fast, but no reciprocal or psychometric read.</p></button>
-      </div>
-      <div class="btn-row"><button class="btn ghost" data-action="back-to-profile">Cancel</button>
-        <button class="btn ghost" data-action="share-candidate-link">Copy candidate questionnaire link</button></div>
-    </div>`;
-  appEl.innerHTML = shell(content, 'Add a candidate');
-}
 function renderCandName(){
   const p = state.flow.profile;
+  const seek = seekOf(state.self);
   const content = `
     <div class="panel">
-      <p class="eyebrow">${state.flow.kind==='proxy'?'Proxy estimate':'Quick estimate'}</p>
-      <h2 class="section-title">Who are we comparing?</h2>
-      <p class="section-desc">A first name or initials is plenty.</p>
+      <p class="eyebrow">Size up someone</p>
+      <h2 class="section-title">Who are you sizing up?</h2>
+      <p class="section-desc">A first name or initials is plenty. You'll answer a few questions with your best read on ${seek.pos==='their'?'them':seek.subj} — ${seek.subj} never has to participate.</p>
       <input class="text-input" id="candName" type="text" placeholder='e.g. "J."' value="${escapeHtml(p.name)}"/>
       <div class="btn-row"><button class="btn ghost" data-action="back-to-profile">Cancel</button>
         <button class="btn primary" data-action="cand-name-next">Continue →</button></div>
     </div>`;
-  appEl.innerHTML = shell(content, 'Add a candidate');
-}
-function renderQuick(){
-  const p = state.flow.profile;
-  const rows = QUICK_QUESTIONS.map(q=>{
-    const v = p.quick ? p.quick[q.cat] : null;
-    const btns = [1,2,3,4,5].map(n=>`<button data-action="quick-answer" data-cat="${q.cat}" data-v="${n}" class="${v===n?'sel':''}">${n}</button>`).join('');
-    return `<div class="item"><p class="q-text" style="font-size:1.05rem;">${escapeHtml(q.text)}</p><div class="scale">${btns}</div><div class="scale-labels"><span>${q.low}</span><span>${q.high}</span></div></div>`;
-  }).join('');
-  const done = QUICK_QUESTIONS.every(q=> p.quick && p.quick[q.cat]!=null);
-  const content = `<div class="panel"><p class="eyebrow">Quick estimate</p>
-    <h2 class="section-title">${escapeHtml(p.name||'This person')}</h2>${rows}
-    <div class="btn-row"><button class="btn ghost" data-action="back-to-profile">Cancel</button>
-    <button class="btn primary" data-action="quick-done" ${done?'':'disabled'}>See compatibility →</button></div></div>`;
-  appEl.innerHTML = shell(content, 'Quick estimate');
+  appEl.innerHTML = shell(content, 'Size up someone');
 }
 
-/* ---- candidate result ---- */
+/* ---- her attachment style (your quick read) ---- */
+function renderCandAttach(){
+  const p = state.flow.profile;
+  const seek = seekOf(state.self);
+  const cur = p.attachmentStyle;
+  const desc = {
+    secure:'Comfortable with closeness and independence; steady, communicates directly, not easily thrown.',
+    anxious:'Craves closeness and reassurance; can worry about the relationship or fear distance.',
+    dismissive:'Highly self-reliant; values independence, can seem distant or uncomfortable with too much closeness.',
+    fearful:'Wants closeness but it feels unsafe; runs hot and cold, hard to predict.',
+  };
+  const cards = ['secure','anxious','dismissive','fearful'].map(s=>`<button class="choice-card" data-action="set-cand-attach" data-v="${s}" style="${cur===s?'border-color:var(--gold);':''}"><h4>${ATTACH_LABEL[s]}</h4><p>${desc[s]}</p></button>`).join('');
+  const content = `
+    <div class="panel">
+      <p class="eyebrow">Your read on ${escapeHtml(p.name||seek.subj)}</p>
+      <h2 class="section-title">Which best fits ${seek.pos==='their'?'them':seek.subj}?</h2>
+      <p class="section-desc">Your honest read on how ${seek.subj} ${seek.subj==='they'?'do':'does'} closeness and conflict. If unsure, pick the closest.</p>
+      <div class="choice-cards">${cards}</div>
+      <div class="btn-row"><button class="btn ghost" data-action="cand-attach-back">← Back</button>
+        <button class="btn primary" data-action="cand-attach-next" ${cur?'':'disabled'}>Continue →</button></div>
+    </div>`;
+  appEl.innerHTML = shell(content, 'Size up someone');
+}
+
+/* ---- "how does she fit your ideal?" result ---- */
 function renderCandResult(){
   const self=state.self; deriveAll(self);
+  const seek = seekOf(self);
   const cand = state.candidates.find(c=>c.id===state.lastCandidateId);
   if(!cand){ setView('profile'); return; }
-  if (cand.source!=='quick') deriveAll(cand);
   const gate = passesDealbreakers(self, cand);
-  const quick = cand.source==='quick';
+  const fit = fitToIdeal(self, cand);
+  const ideal = deriveIdealPartner(self);
 
-  let scoreBlock, chartBlock, psychBlock='';
-  if (quick){
-    const m = quickCompat(self,cand);
-    const axes6 = RECIP_CATS.map(c=>({id:c.id,short:c.short}));
-    const idealV = categoryScores(self);
-    const candV = {}; RECIP_CATS.forEach(c=> candV[c.id]= cand.quick&&cand.quick[c.id]!=null?Math.round((cand.quick[c.id]-1)/4*100):0);
-    chartBlock = buildRadarSVG(axes6, [{color:'#C9A35C',values:idealV},{color:'#5FA8A0',dashed:true,values:candV}], 320);
-    scoreBlock = `<div class="stat-grid"><div class="stat"><div class="k">Quick alignment</div><div class="v">${m}%</div></div></div>
-      <div class="note-banner">Quick estimate — your subjective read on six categories. Import their questionnaire for a true reciprocal score.</div>`;
-  } else {
-    const rm = calculateReciprocalMatch(self,cand);
-    const idealAxes = profileAxisScores(self);
-    const candAxes = candidateAxisScores(self,cand);
-    chartBlock = buildRadarSVG(COMPASS_AXES, [{color:'#C9A35C',values:idealAxes},{color:'#5FA8A0',dashed:true,values:candAxes}], 340);
-    scoreBlock = `<div class="stat-grid">
-      <div class="stat"><div class="k">Mutual match</div><div class="v teal">${rm.mutualMatch}%</div></div>
-      <div class="stat"><div class="k">You → them</div><div class="v">${rm.aToB}%</div></div>
-      <div class="stat"><div class="k">Them → you</div><div class="v">${rm.bToA}%</div></div>
-      <div class="stat"><div class="k">Shared items</div><div class="v">${rm.shared}</div></div></div>
-      ${cand.source==='proxy'?'<div class="note-banner">Proxy estimate — answered on their behalf, so treat as lower-confidence.</div>':''}`;
-    psychBlock = renderCandPsych(self, cand);
-  }
+  // 6-axis compass: your ideal target level (gold) vs where she actually lands (teal)
+  const axes6 = RECIP_CATS.map(c=>({id:c.id, short:c.short}));
+  const herLevels = categoryScores(cand);
+  const chartBlock = buildRadarSVG(axes6, [
+    {color:'#C9A35C', values: ideal.axisScores},
+    {color:'#5FA8A0', dashed:true, values: herLevels},
+  ], 320);
 
-  const gateBanner = !gate.pass ? `<div class="warn-banner"><strong>⚠ CRITICAL — non-compensatory exclusion.</strong> This candidate triggers a hard non-negotiable (${gate.failed.map(f=>DB_LABEL[f]||f).join(', ')}). Relational success is non-compensatory: strong scores elsewhere cannot offset a core misalignment or a behavioral-safety flag. They are excluded from ranking.</div>` : '';
+  const catRows = RECIP_CATS.map(c=>{
+    const sat = categorySatisfaction(self, cand, c.id);
+    return `<tr><td>${c.label}</td><td style="width:50%"><div class="bar-track"><div class="bar-fill cand" style="width:${sat}%"></div></div></td><td style="font-family:var(--font-mono);text-align:right;">${sat}%</td></tr>`;
+  }).join('');
+
+  const scoreBlock = `<div class="stat-grid">
+      <div class="stat"><div class="k">Fit to your ideal</div><div class="v teal">${fit}%</div></div>
+      <div class="stat"><div class="k">Dealbreakers</div><div class="v${gate.pass?'':' '}" style="${gate.pass?'':'color:var(--rust)'}">${gate.pass?'0 flags':gate.failed.length+' flag'+(gate.failed.length>1?'s':'')}</div></div>
+    </div>
+    <p class="hint" style="margin-top:10px;">How well your read on ${seek.pos==='their'?'them':seek.subj} matches what you're looking for, weighted by what matters most to you.</p>`;
+
+  const gateBanner = !gate.pass ? `<div class="warn-banner"><strong>⚠ CRITICAL — non-compensatory exclusion.</strong> ${escapeHtml(cand.name||'This person')} triggers a hard non-negotiable (${gate.failed.map(f=>DB_LABEL[f]||f).join(', ')}). Relational success is non-compensatory: a strong fit elsewhere cannot offset a core misalignment or a behavioral-safety flag.</div>` : '';
 
   const content = `
-    <div class="toolbar"><button class="btn ghost sm" data-action="back-to-profile">← Blueprint</button>
+    <div class="toolbar"><button class="btn ghost sm" data-action="back-to-profile">← Your ideal</button>
       <button class="btn ghost sm" data-action="add-checkup" data-id="${cand.id}">+ Post-date check-in</button>
       <button class="btn ghost sm" data-action="delete-candidate" data-id="${cand.id}">Delete</button></div>
     <div class="panel">
-      <p class="eyebrow">Compatibility read</p>
-      <h2 class="section-title">${escapeHtml(cand.name||'This candidate')}</h2>
+      <p class="eyebrow">How ${escapeHtml(cand.name||seek.subj)} fit${seek.subj==='they'?'':'s'} your ideal</p>
+      <h2 class="section-title">${escapeHtml(cand.name||'This person')}</h2>
       ${gateBanner}
       <div class="results-grid"><div class="chart-wrap">${chartBlock}</div><div>${scoreBlock}</div></div>
-      <div class="legend"><span class="legend-item"><span class="swatch" style="background:#C9A35C"></span>You</span><span class="legend-item"><span class="swatch" style="background:#5FA8A0"></span>${escapeHtml(cand.name||'Candidate')}</span></div>
+      <div class="legend"><span class="legend-item"><span class="swatch" style="background:#C9A35C"></span>Your ideal</span><span class="legend-item"><span class="swatch" style="background:#5FA8A0"></span>${escapeHtml(cand.name||seek.subjCap)}</span></div>
     </div>
-    ${psychBlock}
+    <div class="panel"><p class="eyebrow">Fit by area</p><table class="breakdown"><tbody>${catRows}</tbody></table></div>
+    ${renderCandPsych(self, cand)}
     ${renderCheckups(cand)}`;
-  appEl.innerHTML = shell(content, 'Candidate read');
+  appEl.innerHTML = shell(content, 'Fit to your ideal');
 }
 function renderCandPsych(self, cand){
-  const att = cand.derived && cand.derived.attachment;
-  const g = cand.derived && cand.derived.gottman;
-  if (!att && !g) return '';
-  let pairing='';
-  if (att && self.derived.attachment){
-    const pr = attachmentPairing(self.derived.attachment, att);
-    const quad = buildAttachmentQuadrant([{att:self.derived.attachment,color:'#C9A35C',label:'You'},{att,color:'#5FA8A0',label:cand.name||'Them'}], 300);
-    pairing = `<div class="results-grid"><div class="chart-wrap">${quad}</div>
-      <div><div class="sub-label">Attachment pairing — ${pr.rating}</div><p class="hint">You: ${ATTACH_LABEL[self.derived.attachment.style]} · Them: ${ATTACH_LABEL[att.style]}.<br/>${pr.note}</p></div></div>`;
-  }
-  let horse='';
-  if (g){
-    const flags=['criticism','contempt','defensiveness','stonewalling'].filter(h=>g[h]>=0.5);
-    horse = flags.length?`<div class="sub-label" style="margin-top:16px;">Conflict watch-outs</div><p class="hint">${flags.map(h=>`<span class="tag rust">${h}</span>`).join('')} — ${flags.map(h=>HORSEMAN_ANTIDOTE[h]).join(' ')}</p>`:'';
-  }
-  return `<div class="panel"><p class="eyebrow">Attachment & conflict</p>${pairing}${horse}</div>`;
+  const seek = seekOf(self);
+  if (!cand.attachmentStyle || !self.derived.attachment) return '';
+  const herAtt = { style: cand.attachmentStyle, ...STYLE_COORDS[cand.attachmentStyle] };
+  const pr = attachmentPairing(self.derived.attachment, herAtt);
+  const quad = buildAttachmentQuadrant([{att:self.derived.attachment,color:'#C9A35C',label:'You'},{att:herAtt,color:'#5FA8A0',label:cand.name||seek.subjCap}], 300);
+  return `<div class="panel"><p class="eyebrow">Attachment pairing</p>
+    <div class="results-grid"><div class="chart-wrap">${quad}</div>
+      <div><div class="sub-label">Pairing — ${pr.rating}</div>
+      <p class="hint">You: ${ATTACH_LABEL[self.derived.attachment.style]} · ${escapeHtml(cand.name||seek.subjCap)}: ${ATTACH_LABEL[cand.attachmentStyle]}.<br/>${pr.note}</p></div></div></div>`;
 }
 function renderCheckups(cand){
   if (!cand.checkups || !cand.checkups.length) return '';
@@ -1101,43 +1127,31 @@ function renderCheckupForm(){
 /* ---- compare compass ---- */
 function renderCompare(){
   const self=state.self; deriveAll(self);
-  const full = state.candidates.filter(c=>c.source!=='quick' && passesDealbreakers(self,c).pass);
-  full.forEach(c=>deriveAll(c));
+  const ideal = deriveIdealPartner(self);
+  const people = state.candidates.filter(c=> passesDealbreakers(self,c).pass);
+  const axes6 = RECIP_CATS.map(c=>({id:c.id, short:c.short}));
   const palette=['#5FA8A0','#7C93C9','#B58A5C','#9C7FB0','#7FAE7F','#C97F9C'];
-  const datasets=[{color:'#C9A35C',values:profileAxisScores(self)}];
-  full.forEach((c,i)=> datasets.push({color:palette[i%palette.length],dashed:true,values:candidateAxisScores(self,c)}));
-  const radar = buildRadarSVG(COMPASS_AXES, datasets, 380);
-  const legend = [`<span class="legend-item"><span class="swatch" style="background:#C9A35C"></span>You</span>`]
-    .concat(full.map((c,i)=>`<span class="legend-item"><span class="swatch" style="background:${palette[i%palette.length]}"></span>${escapeHtml(c.name||'Candidate')}</span>`)).join('');
-  const content=`<div class="toolbar"><button class="btn ghost sm" data-action="back-to-profile">← Blueprint</button></div>
-    <div class="panel"><p class="eyebrow">Side by side</p><h2 class="section-title">Joint compass — ${full.length} candidate${full.length!==1?'s':''}</h2>
+  const datasets=[{color:'#C9A35C',values: ideal.axisScores}];
+  people.forEach((c,i)=> datasets.push({color:palette[i%palette.length],dashed:true,values:categoryScores(c)}));
+  const radar = buildRadarSVG(axes6, datasets, 380);
+  const legend = [`<span class="legend-item"><span class="swatch" style="background:#C9A35C"></span>Your ideal</span>`]
+    .concat(people.map((c,i)=>`<span class="legend-item"><span class="swatch" style="background:${palette[i%palette.length]}"></span>${escapeHtml(c.name||'Someone')} · ${fitToIdeal(self,c)}%</span>`)).join('');
+  const content=`<div class="toolbar"><button class="btn ghost sm" data-action="back-to-profile">← Your ideal</button></div>
+    <div class="panel"><p class="eyebrow">Side by side</p><h2 class="section-title">Compass — ${people.length} ${people.length===1?'person':'people'} vs your ideal</h2>
     <div class="chart-wrap">${radar}</div><div class="legend">${legend}</div>
-    ${full.length<1?'<div class="empty-state"><p>Add candidates with full questionnaires to compare.</p></div>':''}</div>`;
+    ${people.length<1?'<div class="empty-state"><p>No one to compare yet.</p></div>':''}</div>`;
   appEl.innerHTML = shell(content, 'Compare');
-}
-
-/* ---- candidate-mode finished (export) ---- */
-function renderCandidateExport(){
-  const content=`<div class="panel"><p class="eyebrow">Thank you</p>
-    <h2 class="section-title">Your questionnaire is complete</h2>
-    <p class="section-desc">Download your file and send it to the person who invited you. It stays private — they import it into their own copy to see how you two line up. Nothing is uploaded anywhere.</p>
-    <div class="btn-row">
-      <button class="btn primary" data-action="candidate-export">Download my questionnaire (.json)</button>
-      <button class="btn ghost" data-action="candidate-export-enc">Download encrypted (passphrase)</button>
-    </div></div>`;
-  appEl.innerHTML = shell(content, 'Candidate questionnaire');
-}
-function renderCandidateIntro(){
-  const content=`<div class="panel intro"><p class="eyebrow">You've been invited</p>
-    <h2>Fill out your Partner Blueprint</h2>
-    <p>Someone wants to see how compatible you two are — on values, communication, lifestyle, finances, personality, and attachment. It takes a few minutes. Your answers stay on your device; you'll download a file to send back. Nothing is uploaded.</p>
-    <div class="btn-row"><button class="btn primary" data-action="candidate-start">Begin →</button></div></div>`;
-  appEl.innerHTML = shell(content, 'Candidate questionnaire');
 }
 
 /* ---- settings / crypto ---- */
 function renderSettings(){
+  const seekCur = state.self.seeking || 'woman';
+  const seekBtn = (v,l)=>`<button data-action="set-seeking" data-v="${v}" class="${seekCur===v?'sel':''}" style="padding:8px 14px; background:var(--panel-2); border:1px solid ${seekCur===v?'var(--gold)':'var(--panel-line)'}; border-radius:2px; color:${seekCur===v?'var(--gold)':'var(--text-muted)'}; font-family:var(--font-body); font-size:0.86rem; cursor:pointer; margin-right:6px;">${l}</button>`;
   const content=`<div class="toolbar"><button class="btn ghost sm" data-action="back-to-profile">← Back</button></div>
+    <div class="panel"><p class="eyebrow">Preferences</p><h2 class="section-title">Who you're looking for</h2>
+      <p class="section-desc">Tailors the wording of your results.</p>
+      <div>${seekBtn('woman','A woman')}${seekBtn('man','A man')}${seekBtn('person','A partner')}</div>
+    </div>
     <div class="panel"><p class="eyebrow">Privacy &amp; data</p><h2 class="section-title">Local encryption</h2>
     <p class="section-desc">Your data lives only in this browser. Turn on encryption to protect it at rest with a passphrase (PBKDF2 + AES-GCM, ${PBKDF2_ITERS.toLocaleString()} iterations). ${hasCrypto?'':'<strong>Web Crypto is unavailable here</strong> — encryption is disabled.'}</p>
     ${state.encEnabled
@@ -1166,47 +1180,22 @@ function renderUnlock(err){
 }
 
 /* ---- profile narrative ---- */
-function generateProfileText(p){
-  const scores = categoryScores(p);
-  const ranked = [...RECIP_CATS].sort((a,b)=>scores[b.id]-scores[a.id]);
-  const top=ranked[0], second=ranked[1], low=ranked[ranked.length-1];
-  let p1 = `Your priorities cluster most strongly around <strong>${top.label.toLowerCase()}</strong> and <strong>${second.label.toLowerCase()}</strong>, and <strong>${low.label.toLowerCase()}</strong> matters comparatively less — worth not over-weighting when you evaluate someone.`;
-  let p2='';
-  const att = p.derived && p.derived.attachment;
-  if (att){
-    const map={secure:'a <strong>secure</strong> tendency — comfortable with closeness and able to self-soothe, which lets you be an emotional anchor',
-      anxious:'an <strong>anxious-preoccupied</strong> lean — you value closeness and reassurance, and do best with a steady, consistent partner',
-      dismissive:'a <strong>dismissive-avoidant</strong> lean — you prize independence, so a partner who respects space will fit better',
-      fearful:'a <strong>fearful-avoidant</strong> lean — you want closeness but it can feel unsafe; steadiness and patience matter most'};
-    p2 = `Your attachment responses suggest ${map[att.style]}.`;
-  }
-  let p3='';
-  const bf = p.derived && p.derived.bigFive;
-  if (bf){
-    const hi=[['openness',bf.O],['conscientiousness',bf.C],['extraversion',bf.E],['warmth',bf.A],['emotional stability',bf.ES]].sort((a,b)=>b[1]-a[1])[0][0];
-    p3 = `On personality, your strongest self-rated trait is <strong>${hi}</strong> — a useful thing to seek reciprocity on.`;
-  }
-  return [p1,p2,p3].filter(Boolean).map(x=>`<p>${x}</p>`).join('');
-}
-
 /* ---- dispatch ---- */
 function render(){
   switch(state.view){
     case 'boot': appEl.innerHTML=shell('<div class="empty-state"><p>Loading…</p></div>'); break;
     case 'unlock': renderUnlock(false); break;
     case 'intro': renderIntro(); break;
+    case 'seeking': renderSeeking(); break;
     case 'module': renderModule(); break;
     case 'dealbreakers': renderDealbreakers(); break;
     case 'profile': renderProfile(); break;
-    case 'addChoice': renderAddChoice(); break;
     case 'candName': renderCandName(); break;
-    case 'quick': renderQuick(); break;
+    case 'candAttach': renderCandAttach(); break;
     case 'candResult': renderCandResult(); break;
     case 'compare': renderCompare(); break;
     case 'checkup': renderCheckupForm(); break;
     case 'settings': renderSettings(); break;
-    case 'candidateIntro': renderCandidateIntro(); break;
-    case 'candidateExport': renderCandidateExport(); break;
     default: renderIntro();
   }
   bindInputs();
@@ -1242,35 +1231,22 @@ async function exportJSON(encrypted){
   }
   download(payload, encrypted?'partner-blueprint.enc.json':'partner-blueprint.json');
 }
-function exportCandidate(encrypted){
-  const p = state.flow ? state.flow.profile : state.self;
-  const obj = { format:'partner-blueprint-candidate', schemaVersion:SCHEMA_VERSION, exportedAt:nowISO(), profile:p };
-  if (encrypted){
-    if(!hasCrypto){ alert('Encryption unavailable.'); return; }
-    const pass = prompt('Passphrase (share it with the person you send this to):'); if(!pass) return;
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    deriveKey(pass, salt).then(async key=>{ const env=await encryptJSON(obj,key); env.format='partner-blueprint-candidate'; env.salt=b64(salt); download(env,'candidate-blueprint.enc.json'); });
-    return;
-  }
-  download(obj, 'candidate-blueprint.json');
-}
 
 function migrateV1toV2(data){
   const p = emptyProfile('self','self');
   const ans = data.answers||{};
-  // v1 used ids like v1..t5 under 6 categories; map any numeric answer into a somewhat-important response
+  // v1 used a single 1..5 importance answer per item; seed it as answer + homophily preference.
   Object.keys(ans).forEach(qid=>{ p.responses[qid] = {answer:ans[qid], preferred:[ans[qid]], importance:'somewhat'}; });
-  (data.dealbreakers||[]).forEach(()=>{}); // legacy free-form ids can't map to keyed dims; leave for user
   p.dealbreakerOther = data.dealbreakerOther||'';
-  state.self = p; state.candidates = (data.candidates||[]).map(c=>({ ...emptyProfile(c.id||nextId(),'quick'), name:c.name||'', quick:c.answers?remapQuick(c.answers):{} }));
-  state.toast = 'Imported an older blueprint. Re-answer the modules to unlock the full engine.';
+  state.self = p;
+  state.candidates = [];   // old subjective candidate ratings don't map to the new model
+  state.toast = 'Imported an older blueprint. Re-answer the modules to complete your ideal profile.';
 }
-function remapQuick(a){ const q={}; RECIP_CATS.forEach(c=>{ if(a['cand_'+c.id]!=null) q[c.id]=a['cand_'+c.id]; }); return q; }
 
 function loadAppData(data){
   state.self = data.self || emptyProfile('self','self');
   state.candidates = data.candidates || [];
-  deriveAll(state.self); state.candidates.forEach(c=>{ if(c.source!=='quick') deriveAll(c); });
+  deriveAll(state.self); state.candidates.forEach(c=> deriveAll(c));
 }
 
 async function handleImport(text){
@@ -1281,12 +1257,6 @@ async function handleImport(text){
     const pass = prompt('Passphrase to decrypt this file:'); if(!pass) return;
     try{ const salt=unb64(obj.salt); const key=await deriveKey(pass,salt); obj = await decryptJSON(obj,key); }
     catch(e){ alert('Incorrect passphrase or corrupted file.'); return; }
-  }
-  if (obj.format==='partner-blueprint-candidate' || obj.profile){
-    const prof = obj.profile; prof.id = prof.id && prof.id!=='self' ? prof.id : nextId();
-    prof.source = 'candidate-self'; deriveAll(prof);
-    state.candidates.push(prof); state.lastCandidateId = prof.id;
-    await save(); setView('candResult'); return;
   }
   if (obj.schemaVersion===2 || obj.self){ loadAppData(obj); }
   else if (obj.version===1 || obj.answers){ migrateV1toV2(obj); }
@@ -1311,11 +1281,12 @@ function startSelfFlow(){
 }
 function advanceModule(dir){
   const f=state.flow;
+  const mods = flowModules(f);
   if (dir<0){
-    if (f.moduleIndex===0){ setView(f.kind==='candidate'?'candidateIntro':(f.kind==='self'?'intro':'addChoice')); return; }
+    if (f.moduleIndex===0){ setView(f.kind==='self'?'intro':'candName'); return; }
     f.moduleIndex--; setView('module'); return;
   }
-  if (f.moduleIndex===FULL_MODULES.length-1){ setView('dealbreakers'); return; }
+  if (f.moduleIndex===mods.length-1){ setView(f.kind==='read' ? 'candAttach' : 'dealbreakers'); return; }
   f.moduleIndex++; setView('module');
 }
 
@@ -1323,8 +1294,9 @@ appEl.addEventListener('click', async e=>{
   const t=e.target.closest('[data-action]'); if(!t) return;
   const a=t.dataset.action;
   switch(a){
-    case 'start-self': startSelfFlow(); break;
-    case 'retake': if(confirm('Clear your blueprint and start over? Candidates are kept.')){ state.self=emptyProfile('self','self'); await save(); startSelfFlow(); } break;
+    case 'start-self': if(!state.self.seeking){ setView('seeking'); } else { startSelfFlow(); } break;
+    case 'set-seeking': { const prev=state.view; state.self.seeking=t.dataset.v; await save(); if(prev==='settings') setView('settings'); else startSelfFlow(); break; }
+    case 'retake': if(confirm('Clear your blueprint and start over? People you\'ve sized up are kept.')){ const seeking=state.self.seeking; state.self=emptyProfile('self','self'); state.self.seeking=seeking; await save(); startSelfFlow(); } break;
     case 'settings': setView('settings'); break;
     case 'back-to-profile': state.flow=null; setView('profile'); break;
 
@@ -1340,21 +1312,18 @@ appEl.addEventListener('click', async e=>{
     // dealbreakers
     case 'db-answer': { state.flow.profile.dealbreakers[t.dataset.id]=t.dataset.v; touch(); break; }
     case 'db-nn': { const id=t.dataset.id; state.flow.profile.nonNegotiable[id]=t.checked; break; }
-    case 'db-back': state.flow.moduleIndex=FULL_MODULES.length-1; setView('module'); break;
+    case 'db-back': state.flow.moduleIndex=flowModules(state.flow).length-1; setView(state.flow.kind==='read'?'candAttach':'module'); break;
     case 'db-done': await finishFlow(); break;
 
-    // candidates
-    case 'add-candidate': setView('addChoice'); break;
-    case 'add-import': document.getElementById('importFile').click(); break;
-    case 'add-proxy': state.flow={kind:'proxy', profile:emptyProfile(nextId(),'proxy'), moduleIndex:0, returnView:'profile'}; setView('candName'); break;
-    case 'add-quick': state.flow={kind:'quick', profile:emptyProfile(nextId(),'quick'), moduleIndex:0, returnView:'profile'}; state.flow.profile.quick={}; setView('candName'); break;
-    case 'cand-name-next': setView(state.flow.kind==='quick'?'quick':'module'); break;
-    case 'quick-answer': { state.flow.profile.quick=state.flow.profile.quick||{}; state.flow.profile.quick[t.dataset.cat]=parseInt(t.dataset.v,10); render(); break; }
-    case 'quick-done': { const p=state.flow.profile; state.candidates.push(p); state.lastCandidateId=p.id; state.flow=null; await save(); setView('candResult'); break; }
-    case 'view-candidate': state.lastCandidateId=t.dataset.id; setView('candResult'); break;
-    case 'delete-candidate': if(confirm('Delete this candidate?')){ state.candidates=state.candidates.filter(c=>c.id!==t.dataset.id); await save(); setView('profile'); } break;
+    // size up someone (you answer about them)
+    case 'add-candidate': state.flow={kind:'read', profile:emptyProfile(nextId(),'read'), moduleIndex:0, returnView:'profile'}; setView('candName'); break;
+    case 'cand-name-next': setView('module'); break;
+    case 'set-cand-attach': { state.flow.profile.attachmentStyle=t.dataset.v; touch(); break; }
+    case 'cand-attach-back': state.flow.moduleIndex=flowModules(state.flow).length-1; setView('module'); break;
+    case 'cand-attach-next': setView('dealbreakers'); break;
+    case 'view-candidate': state.lastCandidateId=t.dataset.id; state.flow=null; setView('candResult'); break;
+    case 'delete-candidate': if(confirm('Delete this person?')){ state.candidates=state.candidates.filter(c=>c.id!==t.dataset.id); await save(); setView('profile'); } break;
     case 'compare-all': setView('compare'); break;
-    case 'share-candidate-link': shareCandidateLink(); break;
 
     // checkups
     case 'add-checkup': state.checkupFor=t.dataset.id; state.checkupDraft={}; setView('checkup'); break;
@@ -1367,11 +1336,6 @@ appEl.addEventListener('click', async e=>{
     case 'export-json': await exportJSON(false); break;
     case 'export-json-enc': await exportJSON(true); break;
     case 'import-json': document.getElementById('importFile').click(); break;
-
-    // candidate mode
-    case 'candidate-start': state.flow={kind:'candidate', profile:emptyProfile(nextId(),'candidate-self'), moduleIndex:0, returnView:'candidateExport'}; setView('module'); break;
-    case 'candidate-export': exportCandidate(false); break;
-    case 'candidate-export-enc': exportCandidate(true); break;
     default: break;
   }
 });
@@ -1385,14 +1349,7 @@ function defaultsCheckup(d){ const o={}; CHECKUP_ITEMS.forEach(it=> o[it.id]= d&
 async function finishFlow(){
   const f=state.flow;
   if (f.kind==='self'){ deriveAll(state.self); await save(); state.flow=null; setView('profile'); }
-  else if (f.kind==='proxy'){ deriveAll(f.profile); state.candidates.push(f.profile); state.lastCandidateId=f.profile.id; state.flow=null; await save(); setView('candResult'); }
-  else if (f.kind==='candidate'){ deriveAll(f.profile); setView('candidateExport'); }
-}
-
-function shareCandidateLink(){
-  const url = location.href.split('#')[0] + '#candidate';   // location.href works under file:// (origin is null there)
-  if (navigator.clipboard){ navigator.clipboard.writeText(url).then(()=>{ state.toast='Candidate link copied — send it to the person you want to compare with.'; render(); }); }
-  else { prompt('Copy this link and send it:', url); }
+  else if (f.kind==='read'){ state.candidates.push(f.profile); state.lastCandidateId=f.profile.id; state.flow=null; await save(); setView('candResult'); }
 }
 
 async function enableEncryption(){
@@ -1428,7 +1385,6 @@ document.getElementById('importFile').addEventListener('change', e=>{
 
 async function boot(){
   if (location.hash==='#selftest'){ return runSelfTests(); }
-  if (location.hash==='#candidate'){ state.mode='candidate'; setView('candidateIntro'); return; }
   state.db = await openDB();
   const meta = await dbGet(state.db,'meta');
   if (meta && meta.encEnabled){
@@ -1449,17 +1405,26 @@ function runSelfTests(){
   ok('ECR secure classification', deriveAttachment({ecr1:7,ecr3:1,ecr5:7,ecr7:1,ecr9:7,ecr11:1,ecr2:1,ecr4:1,ecr6:1,ecr8:7,ecr10:1,ecr12:1}).style==='secure');
   ok('ECR fearful classification', deriveAttachment({ecr1:1,ecr3:7,ecr5:1,ecr7:7,ecr9:1,ecr11:7,ecr2:7,ecr4:7,ecr6:7,ecr8:1,ecr10:7,ecr12:7}).style==='fearful');
   ok('Gottman contempt=1', near(deriveGottman({g_cri1:1,g_cri2:1,g_con1:5,g_con2:5,g_def1:1,g_def2:1,g_sto1:1,g_sto2:1}).contempt,1));
-  const A={responses:{q:{answer:1,preferred:[1],importance:'very'}}}, B={responses:{q:{answer:1,preferred:[9],importance:'very'}}};
-  ok('geometric mean penalizes asymmetry (=0)', calculateReciprocalMatch(A,B).mutualMatch===0);
   const self={dealbreakers:{childbearing:'yes'},nonNegotiable:{childbearing:true}};
   ok('gate excludes conflicting childbearing', !passesDealbreakers(self,{dealbreakers:{childbearing:'no'},derived:{}}).pass);
   ok('gate passes open childbearing', passesDealbreakers(self,{dealbreakers:{childbearing:'open'},derived:{}}).pass);
-  const ranked=rankTOPSIS([{id:'x',values:{m:90,a:1}},{id:'y',values:{m:50,a:6}}],[{key:'m',type:'benefit',weight:2},{key:'a',type:'cost',weight:1}]);
-  ok('TOPSIS ranks best first', ranked[0].id==='x');
+  // ideal-partner derivation
+  const me = emptyProfile('self','self'); me.seeking='woman';
+  RECIP_ITEMS.forEach(it=>{ me.responses[it.id]={answer:it.options[0][0], preferred:[it.options[0][0]], importance:'very'}; });
+  me.tipiRaw={tipi1:6,tipi2:2,tipi3:6,tipi4:6,tipi5:5,tipi6:3,tipi7:6,tipi8:2,tipi9:3,tipi10:3};
+  me.ecrRaw={ecr1:2,ecr3:6,ecr5:2,ecr7:6,ecr9:2,ecr11:6,ecr2:6,ecr4:6,ecr6:6,ecr8:2,ecr10:6,ecr12:6}; // anxious-ish
+  deriveAll(me); const idl=deriveIdealPartner(me);
+  ok('ideal attachment is secure', idl.attachment.style==='secure');
+  ok('ideal attachment rationale non-empty', !!idl.attachment.rationale && idl.attachment.rationale.length>10);
+  ok('ideal warmth & stability are high (>=6)', idl.bigFive.A>=6 && idl.bigFive.ES>=6);
+  ok('ideal archetype non-empty', typeof idl.archetype==='string' && idl.archetype.length>0);
+  ok('ideal reflects preferences (wants populated)', RECIP_CATS.some(c=> idl.cats[c.id].wants.length>0));
+  // fit: perfect match to own preferences = 100
+  ok('fitToIdeal = 100 for a perfect read', fitToIdeal(me, me)===100);
   appEl.innerHTML = shell(`<div class="panel"><p class="eyebrow">Self-test</p><h2 class="section-title">${pass} passed, ${fail} failed</h2><pre style="font-family:var(--font-mono);font-size:0.8rem;line-height:1.8;color:${fail?'#e7a59c':'#5FA8A0'}">${out.join('\n')}</pre></div>`, 'Self-test');
 }
 
-window.addEventListener('hashchange', ()=>{ if(location.hash==='#candidate'||location.hash==='#selftest') location.reload(); });
+window.addEventListener('hashchange', ()=>{ if(location.hash==='#selftest') location.reload(); });
 boot();
 </script>
 </body>
