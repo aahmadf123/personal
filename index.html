@@ -688,7 +688,9 @@ async function persist(){
   if (!state.db) return;
   await dbPut(state.db, 'meta', { encEnabled:state.encEnabled, salt: state.saltB64 });
   const data = { schemaVersion:SCHEMA_VERSION, self:state.self, candidates:state.candidates };
-  if (state.encEnabled && state.cryptoKey){
+  if (state.encEnabled){
+    // Never downgrade to plaintext: if the store is locked (no key), skip the data write.
+    if (!state.cryptoKey){ console.warn('persist skipped: encrypted store is locked'); return; }
     await dbPut(state.db, 'data', await encryptJSON(data, state.cryptoKey));
   } else {
     await dbPut(state.db, 'data', data);
@@ -1289,6 +1291,13 @@ async function handleImport(text){
   if (obj.schemaVersion===2 || obj.self){ loadAppData(obj); }
   else if (obj.version===1 || obj.answers){ migrateV1toV2(obj); }
   else { alert('Unrecognized file.'); return; }
+  // Recovery via the locked screen's "import a backup instead": we have no key, so
+  // turn encryption off (the imported backup is now the plaintext source) rather than
+  // silently skip persistence. The user can re-enable encryption afterward.
+  if (state.encEnabled && !state.cryptoKey){
+    state.encEnabled=false; state.saltB64=null; state.locked=false;
+    state.toast='Recovered from backup — encryption is now off. Re-enable it in Privacy & data.';
+  }
   await save();
   setView(profileHasAnyData(state.self)?'profile':'intro');
 }
@@ -1330,7 +1339,7 @@ appEl.addEventListener('click', async e=>{
 
     // dealbreakers
     case 'db-answer': { state.flow.profile.dealbreakers[t.dataset.id]=t.dataset.v; touch(); break; }
-    case 'db-nn': { const id=t.dataset.id; state.flow.profile.nonNegotiable[id]=t.target.checked; break; }
+    case 'db-nn': { const id=t.dataset.id; state.flow.profile.nonNegotiable[id]=t.checked; break; }
     case 'db-back': state.flow.moduleIndex=FULL_MODULES.length-1; setView('module'); break;
     case 'db-done': await finishFlow(); break;
 
@@ -1368,7 +1377,9 @@ appEl.addEventListener('click', async e=>{
 });
 
 function ensureResp(id){ const p=state.flow.profile; if(!p.responses[id]) p.responses[id]={answer:null,preferred:[],importance:'somewhat'}; return p.responses[id]; }
-function touch(){ render(); }
+let _saveTimer=null;
+function scheduleSave(){ if(!state.db) return; clearTimeout(_saveTimer); _saveTimer=setTimeout(()=>{ save(); }, 400); }
+function touch(){ render(); scheduleSave(); }
 function defaultsCheckup(d){ const o={}; CHECKUP_ITEMS.forEach(it=> o[it.id]= d&&d[it.id]!=null?d[it.id]:4); return o; }
 
 async function finishFlow(){
@@ -1379,7 +1390,7 @@ async function finishFlow(){
 }
 
 function shareCandidateLink(){
-  const url = location.origin+location.pathname+'#candidate';
+  const url = location.href.split('#')[0] + '#candidate';   // location.href works under file:// (origin is null there)
   if (navigator.clipboard){ navigator.clipboard.writeText(url).then(()=>{ state.toast='Candidate link copied — send it to the person you want to compare with.'; render(); }); }
   else { prompt('Copy this link and send it:', url); }
 }
