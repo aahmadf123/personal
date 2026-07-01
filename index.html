@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Partner Blueprint — a compatibility self-reflection tool</title>
+<title>Partner Blueprint — a compatibility engine</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'><circle cx='17' cy='17' r='15' fill='none' stroke='%23C9A35C' stroke-width='2'/><circle cx='17' cy='17' r='3' fill='%23C9A35C'/></svg>">
 <style>
   :root{
     --bg:#11151C;
@@ -34,99 +35,31 @@
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
   }
-  #app{
-    max-width:920px;
-    margin:0 auto;
-    padding:40px 24px 96px;
-  }
+  #app{ max-width:940px; margin:0 auto; padding:40px 24px 96px; }
   a{color:var(--gold);}
 
   /* ---------- header / masthead ---------- */
-  .masthead{
-    display:flex;
-    align-items:center;
-    gap:16px;
-    margin-bottom:36px;
-    padding-bottom:20px;
-    border-bottom:1px solid var(--panel-line);
-  }
+  .masthead{ display:flex; align-items:center; gap:16px; margin-bottom:36px; padding-bottom:20px; border-bottom:1px solid var(--panel-line); }
   .masthead .mark{flex:0 0 auto;}
-  .masthead h1{
-    font-family:var(--font-display);
-    font-weight:600;
-    font-size:1.5rem;
-    letter-spacing:0.01em;
-    margin:0;
-    color:var(--text);
-  }
-  .masthead .sub{
-    font-family:var(--font-mono);
-    font-size:0.72rem;
-    letter-spacing:0.12em;
-    text-transform:uppercase;
-    color:var(--text-muted);
-    margin-top:4px;
-  }
+  .masthead h1{ font-family:var(--font-display); font-weight:600; font-size:1.5rem; letter-spacing:0.01em; margin:0; color:var(--text); }
+  .masthead .sub{ font-family:var(--font-mono); font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-muted); margin-top:4px; }
+  .lock-pill{margin-left:auto; font-family:var(--font-mono); font-size:0.62rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--teal); border:1px solid var(--teal-dim); border-radius:20px; padding:4px 10px;}
 
   /* ---------- generic panel ---------- */
-  .panel{
-    background:var(--panel);
-    border:1px solid var(--panel-line);
-    border-radius:3px;
-    padding:32px;
-    position:relative;
-  }
+  .panel{ background:var(--panel); border:1px solid var(--panel-line); border-radius:3px; padding:32px; position:relative; }
   .panel + .panel{margin-top:20px;}
-  .eyebrow{
-    font-family:var(--font-mono);
-    font-size:0.7rem;
-    letter-spacing:0.14em;
-    text-transform:uppercase;
-    color:var(--gold);
-    margin:0 0 10px;
-  }
+  .eyebrow{ font-family:var(--font-mono); font-size:0.7rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); margin:0 0 10px; }
 
   /* ---------- intro ---------- */
-  .intro h2{
-    font-family:var(--font-display);
-    font-size:1.9rem;
-    line-height:1.25;
-    margin:0 0 16px;
-    max-width:32ch;
-  }
-  .intro p{
-    color:var(--text-muted);
-    line-height:1.65;
-    max-width:60ch;
-    margin:0 0 14px;
-    font-size:0.97rem;
-  }
+  .intro h2{ font-family:var(--font-display); font-size:1.9rem; line-height:1.25; margin:0 0 16px; max-width:32ch; }
+  .intro p{ color:var(--text-muted); line-height:1.65; max-width:64ch; margin:0 0 14px; font-size:0.97rem; }
   .intro ul{margin:18px 0; padding-left:0; list-style:none;}
-  .intro li{
-    display:flex; gap:12px;
-    padding:10px 0;
-    border-top:1px solid var(--panel-line);
-    color:var(--text-muted);
-    font-size:0.92rem;
-    line-height:1.5;
-  }
+  .intro li{ display:flex; gap:12px; padding:10px 0; border-top:1px solid var(--panel-line); color:var(--text-muted); font-size:0.92rem; line-height:1.5; }
   .intro li:last-child{border-bottom:1px solid var(--panel-line);}
   .intro li .num{font-family:var(--font-mono); color:var(--gold); flex:0 0 28px;}
 
   /* ---------- buttons ---------- */
-  .btn{
-    font-family:var(--font-mono);
-    font-size:0.78rem;
-    letter-spacing:0.06em;
-    text-transform:uppercase;
-    background:transparent;
-    color:var(--gold);
-    border:1px solid var(--gold-dim);
-    padding:12px 22px;
-    border-radius:2px;
-    cursor:pointer;
-    transition:background 0.15s ease, color 0.15s ease, border-color .15s ease;
-  }
+  .btn{ font-family:var(--font-mono); font-size:0.78rem; letter-spacing:0.06em; text-transform:uppercase; background:transparent; color:var(--gold); border:1px solid var(--gold-dim); padding:12px 22px; border-radius:2px; cursor:pointer; transition:background 0.15s ease, color 0.15s ease, border-color .15s ease; }
   .btn:hover{background:rgba(201,163,92,0.1); border-color:var(--gold);}
   .btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
   .btn.primary{background:var(--gold); color:#1B1404; border-color:var(--gold); font-weight:600;}
@@ -135,432 +68,655 @@
   .btn.ghost:hover{color:var(--text); background:rgba(255,255,255,0.04);}
   .btn:disabled{opacity:0.35; cursor:not-allowed;}
   .btn-row{display:flex; gap:12px; align-items:center; margin-top:28px; flex-wrap:wrap;}
+  .btn.sm{padding:8px 14px; font-size:0.7rem;}
 
   /* ---------- progress rail ---------- */
-  .rail{
-    display:flex;
-    gap:6px;
-    margin-bottom:24px;
-    flex-wrap:wrap;
-  }
-  .rail .seg{
-    flex:1 1 0;
-    min-width:18px;
-    height:4px;
-    background:var(--panel-2);
-    border-radius:2px;
-    overflow:hidden;
-  }
+  .rail{ display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+  .rail .seg{ flex:1 1 0; min-width:14px; height:4px; background:var(--panel-2); border-radius:2px; overflow:hidden; }
   .rail .seg i{display:block; height:100%; transition:width .15s ease;}
-  .rail-label{
-    font-family:var(--font-mono);
-    font-size:0.7rem;
-    letter-spacing:0.1em;
-    text-transform:uppercase;
-    color:var(--text-muted);
-    margin-bottom:10px;
-  }
+  .rail-label{ font-family:var(--font-mono); font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); margin-bottom:10px; }
 
-  /* ---------- question ---------- */
-  .q-cat{
-    font-family:var(--font-mono);
-    font-size:0.7rem;
-    letter-spacing:0.14em;
-    text-transform:uppercase;
-    color:var(--teal);
-    margin:0 0 14px;
-  }
-  .q-text{
-    font-family:var(--font-display);
-    font-size:1.35rem;
-    line-height:1.4;
-    margin:0 0 28px;
-    max-width:48ch;
-  }
-  .scale{
-    display:flex;
-    gap:10px;
-    margin-bottom:6px;
-  }
-  .scale button{
-    flex:1;
-    padding:16px 8px;
-    background:var(--panel-2);
-    border:1px solid var(--panel-line);
-    border-radius:2px;
-    color:var(--text-muted);
-    font-family:var(--font-mono);
-    font-size:0.78rem;
-    cursor:pointer;
-    text-align:center;
-    transition:all .12s ease;
-  }
+  /* ---------- question / items ---------- */
+  .q-cat{ font-family:var(--font-mono); font-size:0.7rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--teal); margin:0 0 14px; }
+  .q-text{ font-family:var(--font-display); font-size:1.25rem; line-height:1.4; margin:0 0 6px; max-width:52ch; }
+  .item{border-top:1px solid var(--panel-line); padding:22px 0;}
+  .item:first-of-type{border-top:none;}
+  .sub-label{font-family:var(--font-mono); font-size:0.64rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); margin:16px 0 8px;}
+  .opts{display:flex; flex-wrap:wrap; gap:8px;}
+  .opts button{ padding:10px 14px; background:var(--panel-2); border:1px solid var(--panel-line); border-radius:2px; color:var(--text-muted); font-family:var(--font-body); font-size:0.86rem; cursor:pointer; transition:all .12s ease; }
+  .opts button:hover{border-color:var(--gold-dim); color:var(--text);}
+  .opts button.sel{background:rgba(201,163,92,0.14); border-color:var(--gold); color:var(--gold); font-weight:600;}
+  .opts.accept button.sel{background:rgba(95,168,160,0.14); border-color:var(--teal); color:var(--teal);}
+  .imp{display:flex; gap:6px; flex-wrap:wrap;}
+  .imp button{flex:1 1 auto; padding:8px 6px; background:var(--panel-2); border:1px solid var(--panel-line); border-radius:2px; color:var(--text-muted); font-family:var(--font-mono); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.04em; cursor:pointer;}
+  .imp button.sel{background:rgba(201,163,92,0.14); border-color:var(--gold); color:var(--gold);}
+
+  .likert-row{display:flex; align-items:center; gap:14px; padding:14px 0; border-top:1px solid var(--panel-line);}
+  .likert-row:first-of-type{border-top:none;}
+  .likert-row .lk-text{flex:1; font-size:0.95rem; line-height:1.4;}
+  .likert{display:flex; gap:5px;}
+  .likert button{width:34px; height:34px; background:var(--panel-2); border:1px solid var(--panel-line); border-radius:50%; color:var(--text-muted); font-family:var(--font-mono); font-size:0.72rem; cursor:pointer;}
+  .likert button.sel{background:var(--gold); border-color:var(--gold); color:#1B1404; font-weight:700;}
+  .likert-ends{display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted); margin:2px 0 18px;}
+
+  .scale{ display:flex; gap:10px; margin-bottom:6px; }
+  .scale button{ flex:1; padding:16px 8px; background:var(--panel-2); border:1px solid var(--panel-line); border-radius:2px; color:var(--text-muted); font-family:var(--font-mono); font-size:0.78rem; cursor:pointer; text-align:center; transition:all .12s ease; }
   .scale button:hover{border-color:var(--gold-dim); color:var(--text);}
-  .scale button.sel{
-    background:rgba(201,163,92,0.14);
-    border-color:var(--gold);
-    color:var(--gold);
-    font-weight:600;
-  }
-  .scale-labels{
-    display:flex; justify-content:space-between;
-    font-size:0.74rem; color:var(--text-muted); margin-bottom:24px;
-  }
-  .choice-list{display:flex; flex-direction:column; gap:10px; margin-bottom:6px;}
-  .choice-list button{
-    text-align:left;
-    padding:14px 18px;
-    background:var(--panel-2);
-    border:1px solid var(--panel-line);
-    border-radius:2px;
-    color:var(--text);
-    cursor:pointer;
-    font-family:var(--font-body);
-    font-size:0.93rem;
-    transition:all .12s ease;
-  }
-  .choice-list button:hover{border-color:var(--gold-dim);}
-  .choice-list button.sel{border-color:var(--gold); background:rgba(201,163,92,0.1);}
-  .check-list{display:flex; flex-direction:column; gap:10px;}
-  .check-list label{
-    display:flex; align-items:flex-start; gap:12px;
-    padding:14px 18px;
-    background:var(--panel-2);
-    border:1px solid var(--panel-line);
-    border-radius:2px;
-    cursor:pointer;
-    font-size:0.92rem;
-  }
-  .check-list input{margin-top:3px; accent-color:var(--gold);}
-  .text-input{
-    width:100%;
-    background:var(--panel-2);
-    border:1px solid var(--panel-line);
-    border-radius:2px;
-    color:var(--text);
-    font-family:var(--font-body);
-    font-size:0.92rem;
-    padding:12px 14px;
-    margin-top:4px;
-  }
-  .hint{color:var(--text-muted); font-size:0.82rem; margin:-18px 0 24px;}
+  .scale button.sel{ background:rgba(201,163,92,0.14); border-color:var(--gold); color:var(--gold); font-weight:600; }
+  .scale-labels{ display:flex; justify-content:space-between; font-size:0.74rem; color:var(--text-muted); margin-bottom:24px; }
 
-  /* ---------- results layout ---------- */
-  .results-grid{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:20px;
-  }
+  .check-list{display:flex; flex-direction:column; gap:10px;}
+  .check-list label{ display:flex; align-items:flex-start; gap:12px; padding:14px 18px; background:var(--panel-2); border:1px solid var(--panel-line); border-radius:2px; cursor:pointer; font-size:0.92rem; }
+  .check-list input{margin-top:3px; accent-color:var(--gold);}
+  .text-input{ width:100%; background:var(--panel-2); border:1px solid var(--panel-line); border-radius:2px; color:var(--text); font-family:var(--font-body); font-size:0.92rem; padding:12px 14px; margin-top:4px; }
+  .hint{color:var(--text-muted); font-size:0.82rem; line-height:1.5;}
+  .db-row{display:flex; align-items:center; gap:12px; padding:16px 0; border-top:1px solid var(--panel-line); flex-wrap:wrap;}
+  .db-row:first-of-type{border-top:none;}
+  .db-row .db-q{flex:1 1 220px; font-size:0.95rem;}
+  .nn-toggle{display:flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:0.64rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--rust); cursor:pointer;}
+  .nn-toggle input{accent-color:var(--rust);}
+
+  /* ---------- results ---------- */
+  .results-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
   @media (max-width:760px){ .results-grid{grid-template-columns:1fr;} }
   .chart-wrap{display:flex; align-items:center; justify-content:center;}
   .legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:18px; justify-content:center;}
   .legend-item{display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em;}
   .swatch{width:11px; height:11px; border-radius:50%; display:inline-block;}
-
-  .profile-text{
-    font-family:var(--font-display);
-    font-size:1.05rem;
-    line-height:1.75;
-    color:var(--text);
-  }
+  .profile-text{ font-family:var(--font-display); font-size:1.05rem; line-height:1.75; color:var(--text); }
   .profile-text strong{color:var(--gold); font-weight:600;}
+  .profile-text p{margin:0 0 14px;}
 
   table.breakdown{width:100%; border-collapse:collapse; margin-top:6px;}
-  table.breakdown th{
-    text-align:left; font-family:var(--font-mono); font-size:0.68rem;
-    text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);
-    padding:8px 10px; border-bottom:1px solid var(--panel-line);
-  }
+  table.breakdown th{ text-align:left; font-family:var(--font-mono); font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); padding:8px 10px; border-bottom:1px solid var(--panel-line); }
   table.breakdown td{padding:10px 10px; border-bottom:1px solid var(--panel-line); font-size:0.88rem; vertical-align:middle;}
   table.breakdown tr:last-child td{border-bottom:none;}
   .bar-track{background:var(--panel-2); border-radius:2px; height:8px; width:100%; overflow:hidden;}
   .bar-fill{height:100%; background:var(--gold);}
   .bar-fill.cand{background:var(--teal);}
 
-  .tag{
-    display:inline-block; font-family:var(--font-mono); font-size:0.68rem;
-    letter-spacing:0.06em; text-transform:uppercase;
-    border:1px solid var(--gold-dim); color:var(--gold);
-    padding:3px 8px; border-radius:2px; margin:2px 6px 2px 0;
-  }
+  .tag{ display:inline-block; font-family:var(--font-mono); font-size:0.68rem; letter-spacing:0.06em; text-transform:uppercase; border:1px solid var(--gold-dim); color:var(--gold); padding:3px 8px; border-radius:2px; margin:2px 6px 2px 0; }
   .tag.rust{border-color:var(--rust); color:var(--rust);}
   .tag.teal{border-color:var(--teal-dim); color:var(--teal);}
 
-  .dealbreaker-flag{
-    border:1px solid var(--rust);
-    background:rgba(181,86,74,0.1);
-    color:var(--rust);
-    padding:14px 18px;
-    border-radius:2px;
-    font-size:0.88rem;
-    margin-top:18px;
-    line-height:1.5;
-  }
+  .warn-banner{ border:1px solid var(--rust); background:rgba(181,86,74,0.12); color:#e7a59c; padding:16px 20px; border-radius:3px; font-size:0.9rem; margin:18px 0; line-height:1.55; }
+  .warn-banner strong{color:var(--rust);}
+  .note-banner{ border:1px solid var(--gold-dim); background:rgba(201,163,92,0.08); color:var(--text-muted); padding:14px 18px; border-radius:3px; font-size:0.85rem; margin:16px 0; line-height:1.55; }
 
-  .candidate-card{
-    border:1px solid var(--panel-line);
-    border-radius:3px;
-    padding:22px 24px;
-    margin-top:16px;
-    background:var(--panel-2);
-  }
-  .candidate-card h3{
-    font-family:var(--font-display); font-size:1.15rem; margin:0 0 4px;
-    display:flex; align-items:baseline; gap:10px; justify-content:space-between;
-  }
-  .candidate-score{font-family:var(--font-mono); color:var(--teal); font-size:1rem;}
-  .candidate-card .meta{color:var(--text-muted); font-size:0.82rem; margin-bottom:14px;}
-
+  .candidate-card{ border:1px solid var(--panel-line); border-radius:3px; padding:22px 24px; margin-top:16px; background:var(--panel-2); }
   .rank-list{display:flex; flex-direction:column; gap:10px; margin-top:10px;}
-  .rank-row{
-    display:flex; align-items:center; gap:14px;
-    padding:12px 16px; background:var(--panel-2); border:1px solid var(--panel-line); border-radius:2px;
-  }
+  .rank-row{ display:flex; align-items:center; gap:14px; padding:12px 16px; background:var(--panel-2); border:1px solid var(--panel-line); border-radius:2px; }
+  .rank-row.excluded{opacity:0.7; border-color:var(--rust);}
   .rank-row .pos{font-family:var(--font-mono); color:var(--gold); font-size:0.85rem; width:22px;}
   .rank-row .name{flex:1; font-size:0.92rem;}
   .rank-row .score{font-family:var(--font-mono); color:var(--teal); font-size:0.92rem;}
 
-  .empty-state{
-    text-align:center; padding:50px 20px; color:var(--text-muted);
-  }
-  .empty-state p{max-width:40ch; margin:8px auto 0; line-height:1.6; font-size:0.9rem;}
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-top:16px;}
+  .stat{background:var(--panel-2); border:1px solid var(--panel-line); border-radius:3px; padding:16px;}
+  .stat .k{font-family:var(--font-mono); font-size:0.62rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);}
+  .stat .v{font-family:var(--font-display); font-size:1.5rem; color:var(--gold); margin-top:6px;}
+  .stat .v.teal{color:var(--teal);}
 
-  footer{
-    text-align:center; margin-top:50px; color:var(--text-muted);
-    font-family:var(--font-mono); font-size:0.7rem; letter-spacing:0.06em;
-  }
+  .empty-state{ text-align:center; padding:40px 20px; color:var(--text-muted); }
+  .empty-state p{max-width:44ch; margin:8px auto 0; line-height:1.6; font-size:0.9rem;}
+  .choice-cards{display:grid; grid-template-columns:1fr; gap:12px; margin-top:8px;}
+  .choice-card{text-align:left; padding:18px 20px; background:var(--panel-2); border:1px solid var(--panel-line); border-radius:3px; cursor:pointer;}
+  .choice-card:hover{border-color:var(--gold-dim);}
+  .choice-card h4{margin:0 0 6px; font-family:var(--font-display); font-size:1.05rem; color:var(--text);}
+  .choice-card p{margin:0; color:var(--text-muted); font-size:0.85rem; line-height:1.5;}
 
-  .toolbar{display:flex; gap:10px; justify-content:flex-end; margin-bottom:18px; flex-wrap:wrap;}
+  footer{ text-align:center; margin-top:50px; color:var(--text-muted); font-family:var(--font-mono); font-size:0.7rem; letter-spacing:0.06em; line-height:1.7;}
+  .toolbar{display:flex; gap:8px; justify-content:flex-end; margin-bottom:18px; flex-wrap:wrap;}
   .section-title{font-family:var(--font-display); font-size:1.3rem; margin:0 0 6px;}
-  .section-desc{color:var(--text-muted); font-size:0.88rem; margin:0 0 22px; max-width:56ch; line-height:1.55;}
-
+  .section-desc{color:var(--text-muted); font-size:0.88rem; margin:0 0 22px; max-width:60ch; line-height:1.55;}
   input[type=file]{display:none;}
+  .slider{width:100%; accent-color:var(--teal);}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <input type="file" id="importFile" accept="application/json">
 <script>
-/* ====================== DATA ====================== */
+/* ============================================================================
+   PARTNER BLUEPRINT — high-precision romantic compatibility engine
+   Single-file, zero-dependency, client-side SPA. Works on GitHub Pages & file://
+   ---------------------------------------------------------------------------
+   TABLE OF CONTENTS
+     [CONST]      categories, axes, importance weights
+     [INSTRUMENTS] reciprocal item bank, TIPI, ECR-S, Gottman, dealbreakers, checkup
+     [ENGINE]     psychometric derivation + Tier1 gate / Tier2 reciprocal / Tier3 TOPSIS
+     [PROFILE]    empty profile, category/axis scoring, narrative text
+     [CHARTS]     radar (compass), attachment quadrant, sparkline
+     [CRYPTO]     PBKDF2 + AES-GCM (Web Crypto)
+     [STORE]      IndexedDB persistence
+     [STATE]      app state
+     [RENDER]     views
+     [EXPORT]     JSON export/import + v1→v2 migration
+     [EVENTS]     delegation + input binding
+     [BOOT]       init, hydrate, #candidate mode, #selftest
+   ========================================================================== */
 
-const CATEGORIES = [
-  {id:'values',        label:'Core Values',               short:'Values'},
-  {id:'security',       label:'Relational Security',       short:'Security'},
-  {id:'communication',  label:'Communication & Conflict',  short:'Communication'},
-  {id:'affection',      label:'Affection & Connection',    short:'Affection'},
-  {id:'lifestyle',      label:'Lifestyle & Daily Rhythm',  short:'Lifestyle'},
-  {id:'traits',         label:'Personality Traits',        short:'Traits'},
+/* ============================== [CONST] ================================== */
+
+const SCHEMA_VERSION = 2;
+
+const IMPORTANCE_WEIGHTS = { irrelevant:0, little:1, somewhat:10, very:50, mandatory:250 };
+const IMPORTANCE_ORDER = ['irrelevant','little','somewhat','very','mandatory'];
+const IMPORTANCE_LABEL = { irrelevant:'Irrelevant', little:'A little', somewhat:'Somewhat', very:'Very', mandatory:'Mandatory' };
+
+// Reciprocal preference categories (also the first 6 compass axes)
+const RECIP_CATS = [
+  {id:'values',        label:'Core Values',        short:'Values'},
+  {id:'communication', label:'Communication',      short:'Comm'},
+  {id:'affection',     label:'Affection',          short:'Affection'},
+  {id:'lifestyle',     label:'Lifestyle',          short:'Lifestyle'},
+  {id:'meaning',       label:'Shared Meaning',     short:'Meaning'},
+  {id:'finance',       label:'Finances',           short:'Finance'},
+];
+// Full 8-axis Joint Compass = reciprocal cats + two psychometric axes
+const COMPASS_AXES = [
+  ...RECIP_CATS.map(c=>({id:c.id, short:c.short})),
+  {id:'personality', short:'Traits'},
+  {id:'attachment',  short:'Security'},
 ];
 
-// Each question: id, cat, text, low label, high label
-const QUESTIONS = [
-  // values
-  {id:'v1', cat:'values', text:'Building a close, involved family life together', low:'Not important', high:'Essential'},
-  {id:'v2', cat:'values', text:'Achieving ambitious career or professional goals', low:'Not important', high:'Essential'},
-  {id:'v3', cat:'values', text:'Financial security and careful long-term planning', low:'Not important', high:'Essential'},
-  {id:'v4', cat:'values', text:'Adventure, travel, and new experiences', low:'Not important', high:'Essential'},
-  {id:'v5', cat:'values', text:'Spiritual or religious life as something we share', low:'Not important', high:'Essential'},
-  {id:'v6', cat:'values', text:'Ongoing personal growth, learning, and intellectual depth', low:'Not important', high:'Essential'},
-  // security
-  {id:'s1', cat:'security', text:'Having a lot of independence and personal space within the relationship', low:'Not important', high:'Essential'},
-  {id:'s2', cat:'security', text:'Getting frequent verbal reassurance that the relationship is solid', low:'Not important', high:'Essential'},
-  {id:'s3', cat:'security', text:'Working through disagreements by talking them out immediately, rather than taking space first', low:'Not important', high:'Essential'},
-  {id:'s4', cat:'security', text:'Building trust gradually over time before fully opening up', low:'Not important', high:'Essential'},
-  {id:'s5', cat:'security', text:'Feeling safe being emotionally vulnerable early in the relationship', low:'Not important', high:'Essential'},
-  // communication
-  {id:'c1', cat:'communication', text:'Direct, straightforward communication over hints or diplomacy', low:'Not important', high:'Essential'},
-  {id:'c2', cat:'communication', text:'Regular deep, reflective conversations about life, beliefs, or the future', low:'Not important', high:'Essential'},
-  {id:'c3', cat:'communication', text:'Playful teasing and humor as a primary way of connecting', low:'Not important', high:'Essential'},
-  {id:'c4', cat:'communication', text:'Checking in with each other often throughout the day', low:'Not important', high:'Essential'},
-  {id:'c5', cat:'communication', text:'A calm, even-keeled communication style that rarely escalates', low:'Not important', high:'Essential'},
-  // affection
-  {id:'a1', cat:'affection', text:'Hearing affirming, appreciative words', low:'Not important', high:'Essential'},
-  {id:'a2', cat:'affection', text:'Spending uninterrupted, undistracted time together', low:'Not important', high:'Essential'},
-  {id:'a3', cat:'affection', text:'Practical acts of help and support', low:'Not important', high:'Essential'},
-  {id:'a4', cat:'affection', text:'Thoughtful gifts and small gestures', low:'Not important', high:'Essential'},
-  {id:'a5', cat:'affection', text:'Physical affection and touch', low:'Not important', high:'Essential'},
-  // lifestyle
-  {id:'l1', cat:'lifestyle', text:'High social energy — going out and meeting people often', low:'Not important', high:'Essential'},
-  {id:'l2', cat:'lifestyle', text:'Strong fitness and health-conscious habits', low:'Not important', high:'Essential'},
-  {id:'l3', cat:'lifestyle', text:'A structured, predictable daily routine over spontaneity', low:'Not important', high:'Essential'},
-  {id:'l4', cat:'lifestyle', text:'Career ambition that takes priority over strict work-life balance', low:'Not important', high:'Essential'},
-  {id:'l5', cat:'lifestyle', text:'Comfort with social drinking', low:'Not important', high:'Essential'},
-  {id:'l6', cat:'lifestyle', text:'Wanting to raise children together', low:'Not important', high:'Essential'},
-  // traits
-  {id:'t1', cat:'traits', text:'Openness to new ideas, people, and experiences', low:'Not important', high:'Essential'},
-  {id:'t2', cat:'traits', text:'Conscientiousness — being organized, reliable, and disciplined', low:'Not important', high:'Essential'},
-  {id:'t3', cat:'traits', text:'Extraversion — outgoing, socially energized', low:'Not important', high:'Essential'},
-  {id:'t4', cat:'traits', text:'Warmth and agreeableness in how they treat people', low:'Not important', high:'Essential'},
-  {id:'t5', cat:'traits', text:'Emotional steadiness, especially under stress', low:'Not important', high:'Essential'},
-];
+/* ============================ [INSTRUMENTS] ============================== */
 
+// Reciprocal items: respondent gives own `answer`, acceptable partner answers `preferred`, and `importance`.
+const RECIP_ITEMS = [
+  // --- values ---
+  {id:'val_family', cat:'values', text:'A close, involved family life together is…',
+   options:[[1,'Not a priority'],[2,'Nice to have'],[3,'Important'],[4,'Essential']]},
+  {id:'val_ambition', cat:'values', text:'Pursuing ambitious career or professional goals is…',
+   options:[[1,'Not important'],[2,'Somewhat'],[3,'Important'],[4,'Essential']]},
+  {id:'val_faith', cat:'values', text:'The role of spirituality or religion in life:',
+   options:[[1,'None'],[2,'Private & personal'],[3,'Shared & important'],[4,'Central to everything']]},
+  {id:'val_growth', cat:'values', text:'Ongoing personal growth, learning, and depth is…',
+   options:[[1,'Low priority'],[2,'Somewhat'],[3,'Important'],[4,'Essential']]},
+  // --- communication ---
+  {id:'comm_style', cat:'communication', text:'My preferred communication style is…',
+   options:[[1,'Very direct & blunt'],[2,'Direct but tactful'],[3,'Diplomatic'],[4,'Gentle & indirect']]},
+  {id:'comm_conflict', cat:'communication', text:'When something is wrong, I prefer to…',
+   options:[[1,'Address it right away'],[2,'Cool off briefly, then talk'],[3,'Take real space first'],[4,'Let most things go']]},
+  {id:'comm_depth', cat:'communication', text:'Deep, reflective conversation is…',
+   options:[[1,'Rarely needed'],[2,'Occasional'],[3,'Important'],[4,'Essential']]},
+  // --- affection ---
+  {id:'aff_language', cat:'affection', text:'What makes me feel most loved:',
+   options:[[1,'Words of affirmation'],[2,'Quality time'],[3,'Acts of service'],[4,'Gifts'],[5,'Physical touch']]},
+  {id:'aff_touch', cat:'affection', text:'Physical affection and touch are…',
+   options:[[1,'Low priority'],[2,'Somewhat'],[3,'Important'],[4,'Essential']]},
+  // --- lifestyle ---
+  {id:'life_social', cat:'lifestyle', text:'My social energy:',
+   options:[[1,'Very outgoing'],[2,'Balanced'],[3,'Mostly low-key'],[4,'Strongly prefer quiet']]},
+  {id:'life_routine', cat:'lifestyle', text:'Routine vs spontaneity:',
+   options:[[1,'Highly structured'],[2,'Somewhat structured'],[3,'Flexible'],[4,'Very spontaneous']]},
+  {id:'life_substance', cat:'lifestyle', text:'My attitude toward alcohol:',
+   options:[[1,"Don't drink"],[2,'Rarely'],[3,'Socially'],[4,'Regularly']]},
+  {id:'life_health', cat:'lifestyle', text:'Fitness and health-conscious habits are…',
+   options:[[1,'Low priority'],[2,'Somewhat'],[3,'Important'],[4,'Essential']]},
+  // --- shared meaning (M4) ---
+  {id:'mean_reunions', cat:'meaning', text:'Daily rituals of reconnection (check-ins, unwinding together) are…',
+   options:[[1,'Not needed'],[2,'Nice'],[3,'Important'],[4,'Essential']]},
+  {id:'mean_goals', cat:'meaning', text:'Sharing long-term goals (travel, milestones, retirement):',
+   options:[[1,'We can differ'],[2,'Somewhat aligned'],[3,'Important'],[4,'Must be aligned']]},
+  {id:'mean_roles', cat:'meaning', text:'Views on life roles and division of labor:',
+   options:[[1,'Traditional'],[2,'Somewhat traditional'],[3,'Egalitarian'],[4,'Fully flexible']]},
+  {id:'mean_commitment', cat:'meaning', text:'What commitment / marriage means to me:',
+   options:[[1,'Sacred & lifelong'],[2,'A serious commitment'],[3,'A partnership that can evolve'],[4,'Independence within togetherness']]},
+  // --- finances (M5) ---
+  {id:'fin_debt', cat:'finance', text:'My attitude toward debt:',
+   options:[[1,'Debt-averse'],[2,'Cautious'],[3,'Pragmatic (strategic debt ok)'],[4,'Comfortable with balances']]},
+  {id:'fin_accounts', cat:'finance', text:'Combining finances:',
+   options:[[1,'Fully joint'],[2,'Mostly joint'],[3,'Mostly separate'],[4,'Fully separate']]},
+  {id:'fin_disclose', cat:'finance', text:'Purchases above this amount should be discussed first:',
+   options:[[1,'$50'],[2,'$200'],[3,'$500'],[4,'$1,000+']]},
+  {id:'fin_fidelity', cat:'finance', text:'Hiding a purchase or debt from a partner is:',
+   options:[[1,'Never ok'],[2,'Rarely ok'],[3,'Sometimes ok'],[4,'Not a big deal']]},
+  {id:'fin_support', cat:'finance', text:'Financially supporting extended family:',
+   options:[[1,'An important duty'],[2,'If truly needed'],[3,'Prefer not to'],[4,"Won't"]]},
+];
+const RECIP_BY_CAT = {};
+RECIP_CATS.forEach(c => RECIP_BY_CAT[c.id] = RECIP_ITEMS.filter(i=>i.cat===c.id));
+function recipMax(item){ return Math.max(...item.options.map(o=>o[0])); }
+
+// TIPI (Gosling et al., 2003). "I see myself as:" 1..7 (Disagree strongly → Agree strongly)
+const TIPI_ITEMS = [
+  {id:'tipi1',  text:'Extraverted, enthusiastic'},
+  {id:'tipi2',  text:'Critical, quarrelsome'},
+  {id:'tipi3',  text:'Dependable, self-disciplined'},
+  {id:'tipi4',  text:'Anxious, easily upset'},
+  {id:'tipi5',  text:'Open to new experiences, complex'},
+  {id:'tipi6',  text:'Reserved, quiet'},
+  {id:'tipi7',  text:'Sympathetic, warm'},
+  {id:'tipi8',  text:'Disorganized, careless'},
+  {id:'tipi9',  text:'Calm, emotionally stable'},
+  {id:'tipi10', text:'Conventional, uncreative'},
+];
+// ECR-S (Wei et al., 2007). 1..7 (Disagree strongly → Agree strongly)
+const ECR_ITEMS = [
+  {id:'ecr1',  text:'It helps to turn to my romantic partner in times of need.'},
+  {id:'ecr2',  text:'I need a lot of reassurance that I am loved by my partner.'},
+  {id:'ecr3',  text:'I want to get close to my partner, but I keep pulling back.'},
+  {id:'ecr4',  text:"I find that my partner doesn't want to get as close as I would like."},
+  {id:'ecr5',  text:'I turn to my partner for many things, including comfort and reassurance.'},
+  {id:'ecr6',  text:'My desire to be very close sometimes scares people away.'},
+  {id:'ecr7',  text:'I try to avoid getting too close to my partner.'},
+  {id:'ecr8',  text:'I do not often worry about being abandoned.'},
+  {id:'ecr9',  text:'I usually discuss my problems and concerns with my partner.'},
+  {id:'ecr10', text:'I get frustrated when my partner is not around as much as I would like.'},
+  {id:'ecr11', text:'I find it difficult to allow myself to depend on romantic partners.'},
+  {id:'ecr12', text:"I worry that romantic partners won't care about me as much as I care about them."},
+];
+// Gottman Four Horsemen — 1..5 frequency (Never → Very often), "During disagreements…"
+const GOTTMAN_ITEMS = [
+  {id:'g_cri1', horseman:'criticism',     text:"I bring up complaints as attacks on who they are ('you always…', 'you never…')."},
+  {id:'g_cri2', horseman:'criticism',     text:"I focus on my partner's character flaws rather than the specific problem."},
+  {id:'g_con1', horseman:'contempt',      text:'I use sarcasm, mockery, eye-rolling, or a mocking tone.'},
+  {id:'g_con2', horseman:'contempt',      text:'I feel a sense of superiority or disgust toward my partner during conflict.'},
+  {id:'g_def1', horseman:'defensiveness', text:'I meet complaints with counter-complaints or excuses rather than taking responsibility.'},
+  {id:'g_def2', horseman:'defensiveness', text:"I feel it's usually not my fault, and I say so."},
+  {id:'g_sto1', horseman:'stonewalling',  text:'I shut down, go silent, or withdraw when things get heated.'},
+  {id:'g_sto2', horseman:'stonewalling',  text:'I feel flooded or overwhelmed and stop responding.'},
+];
+const GOTTMAN_STYLE = {
+  id:'g_style', text:'When you and a partner disagree, which is most true?',
+  options:[
+    ['validator','We calmly discuss and validate each other before problem-solving.'],
+    ['volatile', 'We hash it out with passion — lots of emotion, but we stay engaged.'],
+    ['avoider',  'We tend to minimize or sidestep conflict and move on.'],
+  ]
+};
+const HORSEMAN_ANTIDOTE = {
+  criticism:'Use a softened start-up — describe the situation and your needs without blame.',
+  contempt:'Rebuild fondness and admiration; describe your own feelings and needs instead.',
+  defensiveness:'Accept responsibility for even a small part of the problem.',
+  stonewalling:'Take a real physiological time-out (~20 min) and self-soothe, then return.',
+};
+const CONTEMPT_GATE = 0.6; // contempt score (0..1) above which a candidate is hard-excluded
+
+// M6 hard dealbreakers — keyed dimensions answered by both sides
 const DEALBREAKERS = [
-  {id:'d1', text:'Smoking or regular tobacco / vape use'},
-  {id:'d2', text:'No interest in eventually having children'},
-  {id:'d3', text:'Unwillingness to relocate or sustain a long-distance relationship'},
-  {id:'d4', text:'A fundamentally different stance on religion or spirituality'},
-  {id:'d5', text:'A pattern of dishonesty about major life facts'},
-  {id:'d6', text:'Very different financial values (e.g. spending vs. saving habits)'},
+  {id:'childbearing', q:'Do you want to raise children?',
+   options:[['yes','Yes'],['open','Open / unsure'],['no','No']]},
+  {id:'relocation', q:'Open to relocating or long-distance for the right person?',
+   options:[['yes','Yes'],['no','No']]},
+  {id:'substances', q:'Regular smoking, vaping, or substance use?',
+   options:[['none','None'],['some','Occasional'],['regular','Regular']]},
+  {id:'religion', q:'Role of shared religion / spirituality:',
+   options:[['share','Must share my faith'],['flexible','Flexible'],['secular','Prefer secular']]},
+];
+// compatibility of two stances on a dimension (checked only when marked non-negotiable)
+const DB_COMPAT = {
+  childbearing: (u,c) => !((u==='yes'&&c==='no')||(u==='no'&&c==='yes')),
+  relocation:   (u,c) => !(u==='yes' && c==='no'),
+  substances:   (u,c) => !(u==='none' && c==='regular'),
+  religion:     (u,c) => !((u==='share'&&c==='secular')||(u==='secular'&&c==='share')),
+};
+const DB_LABEL = {childbearing:'Childbearing', relocation:'Relocation', substances:'Substance use', religion:'Religion', contempt:'Contempt (behavioral safety)'};
+
+// Post-date dynamic checkup (Joel et al., 2020 — lived experience beats static traits)
+const CHECKUP_ITEMS = [
+  {id:'commitment',  text:'How dedicated did they seem to building a future?'},
+  {id:'appreciation',text:'Did you feel valued, respected, and admired?'},
+  {id:'sexual',      text:'Physical chemistry, safety, and mutual comfort?'},
+  {id:'partnerSat',  text:'How content and comfortable did they seem with you?'},
+  {id:'conflict',    text:'How well did they handle minor friction or disagreement?'},
 ];
 
-// One alignment question per category, used when scoring a candidate
-const CANDIDATE_QUESTIONS = CATEGORIES.map(c => ({
-  id:'cand_'+c.id, cat:c.id,
+// Legacy quick-rate fallback (one alignment slider per reciprocal category)
+const QUICK_QUESTIONS = RECIP_CATS.map(c => ({
+  id:'quick_'+c.id, cat:c.id,
   text:'Based on what you know about them, how well does this person align with your priorities around '+c.label.toLowerCase()+'?',
-  low:'Not well aligned', high:'Strongly aligned'
+  low:'Not aligned', high:'Strongly aligned'
 }));
 
-/* ====================== STATE ====================== */
+/* =============================== [ENGINE] =============================== */
 
-const state = {
-  view: 'intro',           // intro | quiz | dealbreakers | profile | candIntro | candQuiz | candDealbreakers | candResult | compare
-  qIndex: 0,
-  answers: {},              // questionId -> 1..5
-  dealbreakers: [],         // array of dealbreaker ids
-  dealbreakerOther: '',
-  candidates: [],           // {id, name, answers:{}, dealbreakers:[], dealbreakerOther:''}
-  draftCandidate: null,     // candidate currently being added
-  candQIndex: 0,
-  lastCandidateResultId: null,
-};
+const R7 = x => 8 - x;                       // reverse a 1..7 item
+const mean = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+const clamp = (v,a,b)=> Math.max(a, Math.min(b,v));
 
+function deriveBigFive(t){
+  if (!t || t.tipi1==null) return null;
+  return {
+    E:  mean([t.tipi1, R7(t.tipi6)]),
+    A:  mean([R7(t.tipi2), t.tipi7]),
+    C:  mean([t.tipi3, R7(t.tipi8)]),
+    ES: mean([R7(t.tipi4), t.tipi9]),
+    O:  mean([t.tipi5, R7(t.tipi10)]),
+  };
+}
+function deriveAttachment(e){
+  if (!e || e.ecr1==null) return null;
+  const avoidance = mean([R7(e.ecr1), e.ecr3, R7(e.ecr5), e.ecr7, R7(e.ecr9), e.ecr11]);
+  const anxiety   = mean([e.ecr2, e.ecr4, e.ecr6, R7(e.ecr8), e.ecr10, e.ecr12]);
+  const hiA = anxiety>=4, hiV = avoidance>=4;
+  const style = hiA&&hiV ? 'fearful' : hiA ? 'anxious' : hiV ? 'dismissive' : 'secure';
+  return { anxiety, avoidance, style };
+}
+function deriveGottman(g){
+  if (!g || g.g_con1==null) return null;
+  const norm = ids => (mean(ids.map(id=>g[id])) - 1) / 4;
+  return {
+    style: g.g_style || null,
+    criticism:     norm(['g_cri1','g_cri2']),
+    contempt:      norm(['g_con1','g_con2']),
+    defensiveness: norm(['g_def1','g_def2']),
+    stonewalling:  norm(['g_sto1','g_sto2']),
+  };
+}
+function deriveAll(profile){
+  profile.derived = profile.derived || {};
+  const bf = deriveBigFive(profile.tipiRaw);
+  const att = deriveAttachment(profile.ecrRaw);
+  const g = deriveGottman(profile.gottmanRaw);
+  if (bf) profile.derived.bigFive = bf;
+  if (att) profile.derived.attachment = att;
+  if (g) profile.derived.gottman = g;
+  profile.derived.catScores = categoryScores(profile);
+  return profile;
+}
+
+// Tier 1 — non-compensatory dealbreaker gate
+function passesDealbreakers(self, cand){
+  const failed = [];
+  DEALBREAKERS.forEach(d => {
+    if (self.nonNegotiable && self.nonNegotiable[d.id]){
+      const u = self.dealbreakers[d.id], c = cand.dealbreakers ? cand.dealbreakers[d.id] : null;
+      if (u!=null && c!=null && DB_COMPAT[d.id] && !DB_COMPAT[d.id](u,c)) failed.push(d.id);
+    }
+  });
+  const g = cand.derived && cand.derived.gottman;
+  if (g && g.contempt > CONTEMPT_GATE) failed.push('contempt');
+  return { pass: failed.length===0, failed };
+}
+
+// Tier 2 — reciprocal geometric match
+function calculateReciprocalMatch(self, cand){
+  let earnA=0,possA=0,earnB=0,possB=0,shared=0;
+  const A = self.responses||{}, B = cand.responses||{};
+  Object.keys(A).filter(k=> k in B).forEach(k=>{
+    const a=A[k], b=B[k]; if (a.answer==null||b.answer==null) return;
+    shared++;
+    const wA = IMPORTANCE_WEIGHTS[a.importance]||0, wB = IMPORTANCE_WEIGHTS[b.importance]||0;
+    if (wA>0){ possA+=wA; if ((a.preferred||[]).includes(b.answer)) earnA+=wA; }
+    if (wB>0){ possB+=wB; if ((b.preferred||[]).includes(a.answer)) earnB+=wB; }
+  });
+  const sA = possA>0 ? earnA/possA : 1;
+  const sB = possB>0 ? earnB/possB : 1;
+  return { shared, aToB:Math.round(sA*100), bToA:Math.round(sB*100), mutualMatch:Math.round(Math.sqrt(sA*sB)*100) };
+}
+
+// Tier 3 — TOPSIS ranking. criteria:[{key,type,weight}]; rows:[{id,values:{}}]
+function rankTOPSIS(rows, criteria){
+  const m = rows.length; if (!m) return [];
+  const keys = criteria.map(c=>c.key);
+  const wsum = criteria.reduce((s,c)=>s+c.weight,0)||1;
+  const w={}; criteria.forEach(c=> w[c.key]=c.weight/wsum);
+  const norm={}; keys.forEach(k=>{ const ss=Math.sqrt(rows.reduce((s,r)=>s+(r.values[k]||0)**2,0)); norm[k]=ss>0?ss:1; });
+  const V = rows.map(r=>{ const v={}; keys.forEach(k=> v[k]=(r.values[k]||0)/norm[k]*w[k]); return v; });
+  const pis={},nis={};
+  criteria.forEach(c=>{ const col=V.map(v=>v[c.key]); const mx=Math.max(...col),mn=Math.min(...col);
+    if(c.type==='benefit'){pis[c.key]=mx;nis[c.key]=mn;}else{pis[c.key]=mn;nis[c.key]=mx;} });
+  return rows.map((r,i)=>{ let dP=0,dM=0; keys.forEach(k=>{dP+=(V[i][k]-pis[k])**2; dM+=(V[i][k]-nis[k])**2;});
+    dP=Math.sqrt(dP);dM=Math.sqrt(dM); const c=(dP+dM)>0?dM/(dP+dM):0;
+    return {id:r.id, closeness:Math.round(c*100)}; }).sort((a,b)=>b.closeness-a.closeness);
+}
+
+// TOPSIS criteria vector for a candidate relative to the user
+function topsisCriteria(){
+  return [
+    {key:'match',       type:'benefit', weight:3},
+    {key:'agreeable',   type:'benefit', weight:1.5},
+    {key:'stable',      type:'benefit', weight:1.5},
+    {key:'values',      type:'benefit', weight:1.5},
+    {key:'finance',     type:'benefit', weight:1},
+    {key:'anxiety',     type:'cost',    weight:1},
+    {key:'avoidance',   type:'cost',    weight:1},
+    {key:'volatility',  type:'cost',    weight:1.5},
+  ];
+}
+function topsisRow(self, cand){
+  const r = calculateReciprocalMatch(self, cand);
+  const bf = cand.derived && cand.derived.bigFive;
+  const att = cand.derived && cand.derived.attachment;
+  const g = cand.derived && cand.derived.gottman;
+  return { id:cand.id, values:{
+    match: r.mutualMatch,
+    agreeable: bf ? bf.A/7*100 : 50,
+    stable: bf ? bf.ES/7*100 : 50,
+    values: categorySatisfaction(self, cand, 'values'),
+    finance: categorySatisfaction(self, cand, 'finance'),
+    anxiety: att ? att.anxiety/7*100 : 50,
+    avoidance: att ? att.avoidance/7*100 : 50,
+    volatility: g ? (g.criticism+g.defensiveness+g.stonewalling)/3*100 : 40,
+  }};
+}
+
+/* =============================== [PROFILE] ============================= */
+
+function nowISO(){ return new Date().toISOString(); }
 let idCounter = 1;
-function nextId(){ return 'c' + (idCounter++) + '_' + Date.now().toString(36); }
+function nextId(){ return 'c'+(idCounter++)+'_'+Date.now().toString(36); }
 
-/* ====================== SCORING ====================== */
+function emptyProfile(id, source){
+  return { schemaVersion:SCHEMA_VERSION, id:id||'self', name:'', source:source||'self',
+    createdAt:nowISO(), updatedAt:nowISO(),
+    responses:{}, tipiRaw:{}, ecrRaw:{}, gottmanRaw:{},
+    derived:{}, dealbreakers:{}, nonNegotiable:{}, dealbreakerOther:'', checkups:[] };
+}
 
-function avg(arr){ return arr.reduce((a,b)=>a+b,0) / arr.length; }
-function toPct(v1to5){ return Math.round(((v1to5-1)/4)*100); }
+// normalized 0..100 of a person's own answer on a reciprocal item
+function normAnswer(item, val){ const mx=recipMax(item); return mx>1 ? Math.round((val-1)/(mx-1)*100) : 0; }
 
-function categoryScores(answersObj){
-  const out = {};
-  CATEGORIES.forEach(cat => {
-    const items = QUESTIONS.filter(q => q.cat === cat.id).map(q => answersObj[q.id]).filter(v => v !== undefined);
-    out[cat.id] = items.length ? toPct(avg(items)) : 0;
+// legacy 6-axis category scores = mean of own normalized answers per category
+function categoryScores(profile){
+  const out={};
+  RECIP_CATS.forEach(c=>{
+    const vals = RECIP_BY_CAT[c.id].map(it => profile.responses[it.id]).filter(Boolean)
+      .map(r=> r.answer).filter(v=>v!=null);
+    const items = RECIP_BY_CAT[c.id];
+    const norms = items.map(it=> profile.responses[it.id]&&profile.responses[it.id].answer!=null
+      ? normAnswer(it, profile.responses[it.id].answer) : null).filter(v=>v!=null);
+    out[c.id] = norms.length ? Math.round(mean(norms)) : 0;
   });
   return out;
 }
 
-function candidateCategoryScores(answersObj){
-  const out = {};
-  CATEGORIES.forEach(cat => {
-    const v = answersObj['cand_'+cat.id];
-    out[cat.id] = v !== undefined ? toPct(v) : 0;
+// how well `cand` satisfies `self`'s preferences within one category (importance-weighted)
+function categorySatisfaction(self, cand, catId){
+  let earn=0, poss=0, plainHit=0, plainN=0;
+  RECIP_BY_CAT[catId].forEach(it=>{
+    const a=self.responses[it.id], b=cand.responses ? cand.responses[it.id] : null;
+    if (!a || !b || a.answer==null || b.answer==null) return;
+    const w = IMPORTANCE_WEIGHTS[a.importance]||0;
+    const hit = (a.preferred||[]).includes(b.answer);
+    plainN++; if (hit) plainHit++;
+    if (w>0){ poss+=w; if (hit) earn+=w; }
   });
+  if (poss>0) return Math.round(earn/poss*100);
+  return plainN>0 ? Math.round(plainHit/plainN*100) : 0;
+}
+
+function personalityAxis(profile){
+  const bf = profile.derived && profile.derived.bigFive; if (!bf) return null;
+  return Math.round((mean([bf.A,bf.C,bf.ES,bf.O]) - 1)/6*100);
+}
+function attachmentSecurityAxis(profile){
+  const att = profile.derived && profile.derived.attachment; if (!att) return null;
+  const security = 7 - mean([att.anxiety, att.avoidance]);
+  return Math.round((security-1)/6*100);
+}
+// self polygon across the 8 compass axes (own emphasis + own psychometrics)
+function profileAxisScores(profile){
+  const cs = categoryScores(profile); const out={};
+  RECIP_CATS.forEach(c=> out[c.id]=cs[c.id]);
+  out.personality = personalityAxis(profile) ?? 0;
+  out.attachment = attachmentSecurityAxis(profile) ?? 0;
+  return out;
+}
+// candidate polygon = satisfaction on reciprocal axes + candidate's own psychometrics
+function candidateAxisScores(self, cand){
+  const out={};
+  RECIP_CATS.forEach(c=> out[c.id]=categorySatisfaction(self,cand,c.id));
+  out.personality = personalityAxis(cand) ?? 0;
+  out.attachment = attachmentSecurityAxis(cand) ?? 0;
   return out;
 }
 
-function weightedCompatibility(idealScores, candScores){
-  let num = 0, den = 0;
-  CATEGORIES.forEach(cat => {
-    const w = idealScores[cat.id];
-    num += w * candScores[cat.id];
-    den += w;
-  });
-  return den > 0 ? Math.round(num / den) : 0;
+// attachment pairing heuristic
+const ATTACH_LABEL = {secure:'Secure', anxious:'Anxious-Preoccupied', dismissive:'Dismissive-Avoidant', fearful:'Fearful-Avoidant'};
+function attachmentPairing(a, b){
+  if (!a||!b) return null;
+  const s=a.style, c=b.style;
+  const has=(x,y)=> (s===x&&c===y)||(s===y&&c===x);
+  if (s==='secure'&&c==='secure') return {rating:'Excellent', note:'Two secure partners — a stable, low-threat base.'};
+  if (s==='secure'||c==='secure') return {rating:'Good', note:'A secure partner acts as an anchor, drawing the other toward earned security.'};
+  if (has('anxious','dismissive')) return {rating:'Poor', note:'The classic anxious–avoidant "pursue-withdraw" trap — high instability risk.'};
+  if (s==='anxious'&&c==='anxious') return {rating:'Fair', note:'Mutual reassurance, but watch for co-escalation under stress.'};
+  if (s==='dismissive'&&c==='dismissive') return {rating:'Fair', note:'Low conflict, but intimacy and emotional disclosure may stay shallow.'};
+  return {rating:'Poor', note:'At least one fearful-avoidant partner — expect volatility without deliberate work.'};
 }
 
-/* ====================== PROFILE TEXT GENERATION ====================== */
-
-function generateProfileText(){
-  const scores = categoryScores(state.answers);
-  const ranked = [...CATEGORIES].sort((a,b)=> scores[b.id]-scores[a.id]);
-  const top = ranked[0], second = ranked[1], lowest = ranked[ranked.length-1];
-
-  const topItems = QUESTIONS
-    .filter(q => state.answers[q.id] >= 4)
-    .sort((a,b)=> (state.answers[b.id] - state.answers[a.id]))
-    .slice(0,5);
-
-  const affectionRanked = QUESTIONS.filter(q=>q.cat==='affection')
-    .sort((a,b)=> (state.answers[b.id]||0) - (state.answers[a.id]||0));
-  const topAffection = affectionRanked[0];
-
-  let p1 = `Your priorities cluster most strongly around <strong>${top.label.toLowerCase()}</strong> and <strong>${second.label.toLowerCase()}</strong>. `;
-  if (topItems.length){
-    p1 += `Specifically, you rated these as close to essential: ${topItems.map(q=>'"'+q.text.charAt(0).toLowerCase()+q.text.slice(1)+'"').join('; ')}.`;
+function isComplete(profile, moduleId){
+  switch(moduleId){
+    case 'tipi': return TIPI_ITEMS.every(i=> profile.tipiRaw[i.id]!=null);
+    case 'ecr': return ECR_ITEMS.every(i=> profile.ecrRaw[i.id]!=null);
+    case 'gottman': return GOTTMAN_ITEMS.every(i=> profile.gottmanRaw[i.id]!=null) && profile.gottmanRaw.g_style;
+    default: return RECIP_BY_CAT[moduleId] ? RECIP_BY_CAT[moduleId].every(i=> profile.responses[i.id] && profile.responses[i.id].answer!=null) : true;
   }
-
-  let p2 = '';
-  if (topAffection){
-    p2 += `When it comes to feeling connected day-to-day, <strong>${topAffection.text.toLowerCase()}</strong> stands out as what matters most to you. `;
-  }
-  const s_indep = state.answers['s1']||3, s_reassure = state.answers['s2']||3, s_immediate = state.answers['s3']||3, s_slow = state.answers['s4']||3;
-  if (s_reassure >= 4 && s_indep <= 2){
-    p2 += `You tend to want closeness and reassurance more than distance — a partner who is generous with verbal affirmation and consistent follow-through will likely feel safest to you. `;
-  } else if (s_indep >= 4){
-    p2 += `You value having real independence inside a relationship, so a partner who respects space and doesn't need constant togetherness will likely be a better fit. `;
-  }
-  if (s_immediate >= 4 && s_slow <= 2){
-    p2 += `You'd rather resolve friction quickly than let it sit, which points toward a partner who is also comfortable addressing things head-on.`;
-  } else if (s_slow >= 4){
-    p2 += `You prefer trust to build gradually, which points toward a partner who won't push for instant emotional access.`;
-  }
-
-  let p3 = `<strong>${lowest.label}</strong> matters comparatively less to you than the rest — it's worth not over-weighting that category when you're evaluating someone.`;
-
-  return [p1, p2, p3].filter(Boolean).map(p => `<p>${p}</p>`).join('');
 }
+const FULL_MODULES = [...RECIP_CATS.map(c=>c.id), 'tipi','ecr','gottman'];
+function profileHasFullData(p){ return FULL_MODULES.every(m=> isComplete(p,m)); }
 
-/* ====================== RADAR / COMPASS CHART ====================== */
+/* =============================== [CHARTS] ============================== */
 
 function buildRadarSVG(axes, datasets, size){
-  size = size || 320;
-  const cx = size/2, cy = size/2;
-  const R = size*0.36;
-  const labelR = R + size*0.085;
-  const N = axes.length;
-  const angleFor = i => (-90 + i*(360/N)) * Math.PI/180;
-
+  size = size||340;
+  const cx=size/2, cy=size/2, R=size*0.34, labelR=R+size*0.085, N=axes.length;
+  const angleFor = i => (-90 + i*(360/N))*Math.PI/180;
   let svg = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="Compatibility compass chart">`;
-
-  // rings
-  [20,40,60,80,100].forEach(pct => {
-    const pts = axes.map((a,i)=>{
-      const ang = angleFor(i); const r = R*(pct/100);
-      return (cx + r*Math.cos(ang)).toFixed(1) + ',' + (cy + r*Math.sin(ang)).toFixed(1);
-    }).join(' ');
+  [20,40,60,80,100].forEach(pct=>{
+    const pts = axes.map((a,i)=>{const ang=angleFor(i),r=R*(pct/100); return (cx+r*Math.cos(ang)).toFixed(1)+','+(cy+r*Math.sin(ang)).toFixed(1);}).join(' ');
     svg += `<polygon points="${pts}" fill="none" stroke="rgba(201,163,92,0.16)" stroke-width="1"/>`;
   });
-
-  // axis lines + labels
   axes.forEach((a,i)=>{
-    const ang = angleFor(i);
-    const x2 = cx + R*Math.cos(ang), y2 = cy + R*Math.sin(ang);
+    const ang=angleFor(i), x2=cx+R*Math.cos(ang), y2=cy+R*Math.sin(ang);
     svg += `<line x1="${cx}" y1="${cy}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="rgba(201,163,92,0.16)" stroke-width="1"/>`;
-    const lx = cx + labelR*Math.cos(ang), ly = cy + labelR*Math.sin(ang);
-    let anchor = 'middle';
-    if (Math.cos(ang) > 0.3) anchor = 'start';
-    else if (Math.cos(ang) < -0.3) anchor = 'end';
-    svg += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" font-family="ui-monospace,Menlo,monospace" font-size="${size*0.030}" fill="#8B93A1" letter-spacing="0.04em">${a.short.toUpperCase()}</text>`;
+    const lx=cx+labelR*Math.cos(ang), ly=cy+labelR*Math.sin(ang);
+    let anchor='middle'; if(Math.cos(ang)>0.3)anchor='start'; else if(Math.cos(ang)<-0.3)anchor='end';
+    svg += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" font-family="ui-monospace,Menlo,monospace" font-size="${(size*0.028).toFixed(1)}" fill="#8B93A1" letter-spacing="0.04em">${a.short.toUpperCase()}</text>`;
   });
-
-  // datasets
-  datasets.forEach(ds => {
-    const pts = axes.map((a,i)=>{
-      const ang = angleFor(i); const v = ds.values[a.id]||0; const r = R*(v/100);
-      return [(cx + r*Math.cos(ang)), (cy + r*Math.sin(ang))];
-    });
-    const pointsStr = pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
-    const dash = ds.dashed ? `stroke-dasharray="5,4"` : '';
-    svg += `<polygon points="${pointsStr}" fill="${ds.color}" fill-opacity="0.14" stroke="${ds.color}" stroke-width="2" ${dash}/>`;
-    pts.forEach(p=>{
-      svg += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="${ds.color}"/>`;
-    });
+  datasets.forEach(ds=>{
+    const pts=axes.map((a,i)=>{const ang=angleFor(i),v=ds.values[a.id]||0,r=R*(v/100); return [cx+r*Math.cos(ang),cy+r*Math.sin(ang)];});
+    const pstr=pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+    const dash=ds.dashed?`stroke-dasharray="5,4"`:'';
+    svg += `<polygon points="${pstr}" fill="${ds.color}" fill-opacity="0.14" stroke="${ds.color}" stroke-width="2" ${dash}/>`;
+    pts.forEach(p=> svg+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="${ds.color}"/>`);
   });
-
-  // center mark
-  svg += `<circle cx="${cx}" cy="${cy}" r="2" fill="#C9A35C"/>`;
-  svg += `</svg>`;
+  svg += `<circle cx="${cx}" cy="${cy}" r="2" fill="#C9A35C"/></svg>`;
   return svg;
 }
 
-/* ====================== HELPERS ====================== */
-
-function escapeHtml(str){
-  if(!str) return '';
-  return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+// Attachment quadrant: X = avoidance (0..7), Y = anxiety (0..7)
+function buildAttachmentQuadrant(points, size){
+  size=size||320; const pad=38, W=size-pad*2, H=size-pad*2, x0=pad, y0=pad;
+  const sx=v=> x0 + (v/7)*W;               // avoidance L→R
+  const sy=v=> y0 + (1-(v/7))*H;           // anxiety bottom→top
+  const mid=3.5;
+  let svg=`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="Attachment style quadrant">`;
+  svg+=`<rect x="${x0}" y="${y0}" width="${W}" height="${H}" fill="none" stroke="rgba(201,163,92,0.25)"/>`;
+  svg+=`<line x1="${sx(mid)}" y1="${y0}" x2="${sx(mid)}" y2="${y0+H}" stroke="rgba(201,163,92,0.16)"/>`;
+  svg+=`<line x1="${x0}" y1="${sy(mid)}" x2="${x0+W}" y2="${sy(mid)}" stroke="rgba(201,163,92,0.16)"/>`;
+  const q=[['SECURE',x0+W*0.02,y0+H*0.97],['ANXIOUS',x0+W*0.02,y0+H*0.06],['DISMISSIVE',x0+W*0.72,y0+H*0.97],['FEARFUL',x0+W*0.72,y0+H*0.06]];
+  q.forEach(([t,x,y])=> svg+=`<text x="${x.toFixed(0)}" y="${y.toFixed(0)}" font-family="ui-monospace,Menlo,monospace" font-size="${(size*0.032).toFixed(1)}" fill="#8B93A1" letter-spacing="0.05em">${t}</text>`);
+  svg+=`<text x="${x0+W/2}" y="${size-6}" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#8B93A1">AVOIDANCE →</text>`;
+  svg+=`<text x="10" y="${y0+H/2}" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#8B93A1" transform="rotate(-90 10 ${y0+H/2})">ANXIETY →</text>`;
+  points.forEach(p=>{ if(!p.att) return; const cx=sx(p.att.avoidance), cy=sy(p.att.anxiety);
+    svg+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="5" fill="${p.color}"/>`;
+    svg+=`<text x="${(cx+9).toFixed(1)}" y="${(cy+3).toFixed(1)}" font-family="ui-sans-serif" font-size="11" fill="${p.color}">${escapeHtml(p.label)}</text>`; });
+  svg+=`</svg>`; return svg;
 }
+
+function buildSparkline(values, w, h){
+  w=w||220; h=h||40; if(!values.length) return '';
+  const max=7, min=1; const step = values.length>1 ? w/(values.length-1) : 0;
+  const pts=values.map((v,i)=> `${(i*step).toFixed(1)},${(h-((v-min)/(max-min))*h).toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}"><polyline points="${pts}" fill="none" stroke="#5FA8A0" stroke-width="2"/>${values.map((v,i)=>`<circle cx="${(i*step).toFixed(1)}" cy="${(h-((v-min)/(max-min))*h).toFixed(1)}" r="2.5" fill="#5FA8A0"/>`).join('')}</svg>`;
+}
+
+/* =============================== [CRYPTO] ============================== */
+
+const PBKDF2_ITERS = 600000;
+const enc = new TextEncoder(), dec = new TextDecoder();
+const hasCrypto = typeof crypto!=='undefined' && crypto.subtle;
+function b64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+function unb64(str){ return Uint8Array.from(atob(str), c=>c.charCodeAt(0)); }
+
+async function deriveKey(passphrase, salt){
+  const base = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt, iterations:PBKDF2_ITERS, hash:'SHA-256' },
+    base, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']);
+}
+async function encryptJSON(obj, key){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(JSON.stringify(obj)));
+  return { enc:true, alg:'AES-GCM', kdf:'PBKDF2', iters:PBKDF2_ITERS, iv:b64(iv), ct:b64(ct) };
+}
+async function decryptJSON(env, key){
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(env.iv)}, key, unb64(env.ct));
+  return JSON.parse(dec.decode(pt));
+}
+
+/* =============================== [STORE] ============================== */
+
+const DB_NAME='partnerBlueprint', DB_STORE='kv';
+function openDB(){
+  return new Promise((res,rej)=>{
+    if (!window.indexedDB) return res(null);
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => { const db=req.result; if(!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE, {keyPath:'k'}); };
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => res(null);
+  });
+}
+function dbGet(db,k){ return new Promise(r=>{ if(!db)return r(null); const t=db.transaction(DB_STORE,'readonly').objectStore(DB_STORE).get(k); t.onsuccess=()=>r(t.result?t.result.value:null); t.onerror=()=>r(null); }); }
+function dbPut(db,k,value){ return new Promise(r=>{ if(!db)return r(); const t=db.transaction(DB_STORE,'readwrite').objectStore(DB_STORE).put({k,value}); t.onsuccess=()=>r(); t.onerror=()=>r(); }); }
+
+async function persist(){
+  if (!state.db) return;
+  await dbPut(state.db, 'meta', { encEnabled:state.encEnabled, salt: state.saltB64 });
+  const data = { schemaVersion:SCHEMA_VERSION, self:state.self, candidates:state.candidates };
+  if (state.encEnabled){
+    // Never downgrade to plaintext: if the store is locked (no key), skip the data write.
+    if (!state.cryptoKey){ console.warn('persist skipped: encrypted store is locked'); return; }
+    await dbPut(state.db, 'data', await encryptJSON(data, state.cryptoKey));
+  } else {
+    await dbPut(state.db, 'data', data);
+  }
+}
+function markUpdated(p){ if(p) p.updatedAt = nowISO(); }
+async function save(){ deriveAll(state.self); markUpdated(state.self); try{ await persist(); }catch(e){ console.warn('persist failed', e); } }
+
+/* =============================== [STATE] ============================== */
+
+const state = {
+  view:'boot', mode:'user',        // mode: 'user' | 'candidate'
+  db:null, encEnabled:false, saltB64:null, cryptoKey:null, locked:false,
+  self: emptyProfile('self','self'),
+  candidates:[],
+  flow:null,                        // {kind, profile, moduleIndex, returnView}
+  addChoice:null,
+  lastCandidateId:null,
+  toast:null,
+};
+
+/* =============================== [RENDER] ============================= */
+
+const appEl = document.getElementById('app');
+
+function escapeHtml(str){ if(str==null) return ''; return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
 function compassMark(){
   return `<svg width="34" height="34" viewBox="0 0 34 34">
@@ -570,511 +726,741 @@ function compassMark(){
     <path d="M4 17 L17 14 L30 17 L17 20 Z" fill="none" stroke="#5FA8A0" stroke-width="1"/>
   </svg>`;
 }
-
 function shell(content, subtitle){
+  const lock = state.encEnabled ? `<span class="lock-pill">🔒 Encrypted</span>` : '';
   return `
     <div class="masthead">
       <div class="mark">${compassMark()}</div>
       <div>
         <h1>Partner Blueprint</h1>
-        <div class="sub">${subtitle || 'A compatibility self-reflection tool'}</div>
+        <div class="sub">${subtitle||'A compatibility engine'}</div>
       </div>
+      ${lock}
     </div>
+    ${state.toast?`<div class="note-banner">${escapeHtml(state.toast)}</div>`:''}
     ${content}
-    <footer>Drafted privately in your browser — nothing leaves this tab unless you export it.</footer>
-  `;
+    <footer>
+      Runs entirely in your browser — nothing is uploaded. Not a clinical or diagnostic tool.<br/>
+      ${state.db?'Auto-saved locally' : 'In-memory session'}${state.encEnabled?' · encrypted at rest':''}.
+    </footer>`;
 }
+function setView(v){ state.view=v; render(); window.scrollTo(0,0); }
 
-/* ====================== RENDER: INTRO ====================== */
-
+/* ---- intro ---- */
 function renderIntro(){
-  const hasProgress = Object.keys(state.answers).length > 0;
+  const has = profileHasAnyData(state.self);
   const content = `
     <div class="panel intro">
       <p class="eyebrow">Partner Blueprint</p>
-      <h2>Figure out what you're actually looking for — then check it against someone real.</h2>
-      <p>This walks through ${QUESTIONS.length} short questions about your values, how you handle closeness and conflict, what makes you feel cared for, your day-to-day rhythm, and the traits that matter to you in a partner. It's a structured way to get your own preferences out of your head and onto paper — not a clinical or scientific assessment of you or anyone else.</p>
+      <h2>Engineer what you're actually looking for — then test it against someone real.</h2>
+      <p>A private, science-informed compatibility engine. You'll answer six modules — values, communication, affection &amp; lifestyle, shared meaning &amp; finances, personality (Big&nbsp;Five / TIPI), and attachment &amp; conflict style (ECR-S / Gottman) — plus your hard non-negotiables.</p>
       <ul>
-        <li><span class="num">01</span><span>Answer questions about yourself — what you value, need, and prioritize.</span></li>
-        <li><span class="num">02</span><span>Get a written profile, a compass chart, and a category breakdown.</span></li>
-        <li><span class="num">03</span><span>Optionally score someone you're considering against that blueprint.</span></li>
+        <li><span class="num">01</span><span>Build your blueprint: your answers, what you'd accept in a partner, and how much each matters.</span></li>
+        <li><span class="num">02</span><span>Get a written profile, an 8-axis compass, your attachment quadrant, and conflict-style read.</span></li>
+        <li><span class="num">03</span><span>Add candidates — import their own questionnaire for a true reciprocal match, rank them with a dealbreaker gate + TOPSIS, and log post-date check-ins.</span></li>
       </ul>
-      <p class="hint" style="margin:0 0 6px;">Everything stays in this browser tab — nothing is uploaded anywhere. Use "Export" later to save your results to a file you keep yourself.</p>
+      <p class="hint">Everything stays on this device. Turn on passphrase encryption to protect it at rest, and export an encrypted backup you keep yourself.</p>
       <div class="btn-row">
-        <button class="btn primary" data-action="start-quiz">${hasProgress?'Continue':'Begin'} →</button>
-        ${hasProgress?'<button class="btn ghost" data-action="retake">Start over</button>':''}
+        <button class="btn primary" data-action="start-self">${has?'Continue':'Begin'} →</button>
         <button class="btn ghost" data-action="import-json">Import a saved blueprint</button>
+        <button class="btn ghost" data-action="settings">Privacy &amp; data</button>
       </div>
-    </div>
-  `;
-  appEl.innerHTML = shell(content, null);
+    </div>`;
+  appEl.innerHTML = shell(content, 'A compatibility engine');
 }
+function profileHasAnyData(p){ return Object.keys(p.responses).length>0 || Object.keys(p.tipiRaw).length>0; }
 
-/* ====================== RENDER: MAIN QUIZ ====================== */
-
-function renderQuiz(){
-  const q = QUESTIONS[state.qIndex];
-  const cat = CATEGORIES.find(c => c.id === q.cat);
-  const railHtml = CATEGORIES.map(c => {
-    const qs = QUESTIONS.filter(x => x.cat === c.id);
-    const answered = qs.filter(x => state.answers[x.id] !== undefined).length;
-    const pct = Math.round(answered/qs.length*100);
-    const isCurrent = c.id === cat.id;
-    return `<div class="seg"><i style="width:${pct}%; background:${isCurrent ? 'var(--teal)' : 'var(--gold)'}"></i></div>`;
+/* ---- module quiz (shared by self / proxy / candidate mode) ---- */
+function renderModule(){
+  const f = state.flow, p = f.profile;
+  const modId = FULL_MODULES[f.moduleIndex];
+  const railHtml = FULL_MODULES.map((m,i)=>{
+    const pct = isComplete(p,m)?100:(i===f.moduleIndex?40:0);
+    const color = i===f.moduleIndex?'var(--teal)':'var(--gold)';
+    return `<div class="seg"><i style="width:${pct}%; background:${color}"></i></div>`;
   }).join('');
-  const selected = state.answers[q.id];
-  const scaleHtml = [1,2,3,4,5].map(v =>
-    `<button data-action="answer" data-qid="${q.id}" data-value="${v}" class="${selected===v?'sel':''}">${v}</button>`
-  ).join('');
-
+  let body, title;
+  if (RECIP_BY_CAT[modId]){ title=RECIP_CATS.find(c=>c.id===modId).label; body=renderRecipModule(modId, p); }
+  else if (modId==='tipi'){ title='Personality (Big Five)'; body=renderLikertModule(TIPI_ITEMS, p.tipiRaw, 'tipi', 7, 'Disagree strongly','Agree strongly','I see myself as…'); }
+  else if (modId==='ecr'){ title='Attachment'; body=renderLikertModule(ECR_ITEMS, p.ecrRaw, 'ecr', 7, 'Disagree strongly','Agree strongly','How true is each statement for you?'); }
+  else if (modId==='gottman'){ title='Conflict style'; body=renderGottmanModule(p); }
+  const who = f.kind==='self' ? 'Your blueprint' : (escapeHtml(p.name||'This person'));
+  const last = f.moduleIndex===FULL_MODULES.length-1;
   const content = `
-    <div class="rail-label">Question ${state.qIndex+1} of ${QUESTIONS.length}</div>
+    <div class="rail-label">${who} — module ${f.moduleIndex+1} of ${FULL_MODULES.length}: ${title}</div>
     <div class="rail">${railHtml}</div>
     <div class="panel">
-      <p class="q-cat">${cat.label}</p>
-      <p class="q-text">${q.text}</p>
-      <div class="scale">${scaleHtml}</div>
-      <div class="scale-labels"><span>${q.low}</span><span>${q.high}</span></div>
+      ${body}
       <div class="btn-row">
-        <button class="btn ghost" data-action="quiz-back" ${state.qIndex===0?'disabled':''}>← Back</button>
-        <button class="btn primary" data-action="quiz-next" ${selected===undefined?'disabled':''}>${state.qIndex===QUESTIONS.length-1?'Continue to non-negotiables':'Next'}</button>
+        <button class="btn ghost" data-action="mod-back">← Back</button>
+        <button class="btn primary" data-action="mod-next" ${isComplete(p,modId)?'':'disabled'}>${last?'Continue to non-negotiables':'Next module'}</button>
       </div>
-    </div>
-  `;
-  appEl.innerHTML = shell(content, 'Building your blueprint');
+      ${!isComplete(p,modId)?'<p class="hint" style="margin-top:12px;">Answer every item to continue.</p>':''}
+    </div>`;
+  appEl.innerHTML = shell(content, f.kind==='candidate'?'Candidate questionnaire':'Building the blueprint');
 }
 
-/* ====================== RENDER: MAIN DEALBREAKERS ====================== */
+function renderRecipModule(catId, p){
+  const items = RECIP_BY_CAT[catId];
+  return `<p class="section-desc">For each, give your own answer, mark which answers you'd accept in a partner, and how much it matters.</p>` +
+    items.map(it=>{
+      const r = p.responses[it.id] || {answer:null, preferred:[], importance:'somewhat'};
+      const ans = it.options.map(([v,l])=>`<button data-action="recip-answer" data-id="${it.id}" data-v="${v}" class="${r.answer===v?'sel':''}">${escapeHtml(l)}</button>`).join('');
+      const acc = it.options.map(([v,l])=>`<button data-action="recip-pref" data-id="${it.id}" data-v="${v}" class="${(r.preferred||[]).includes(v)?'sel':''}">${escapeHtml(l)}</button>`).join('');
+      const imp = IMPORTANCE_ORDER.map(k=>`<button data-action="recip-imp" data-id="${it.id}" data-k="${k}" class="${r.importance===k?'sel':''}">${IMPORTANCE_LABEL[k]}</button>`).join('');
+      return `<div class="item">
+        <p class="q-text">${escapeHtml(it.text)}</p>
+        <div class="sub-label">Your answer</div><div class="opts">${ans}</div>
+        <div class="sub-label">You'd accept a partner who answers</div><div class="opts accept">${acc}</div>
+        <div class="sub-label">How much this matters in a partner</div><div class="imp">${imp}</div>
+      </div>`;
+    }).join('');
+}
+function renderLikertModule(items, raw, prefix, scale, lo, hi, desc){
+  const dots=(id,val)=> `<div class="likert">`+Array.from({length:scale},(_,i)=>i+1).map(v=>`<button data-action="likert" data-store="${prefix}" data-id="${id}" data-v="${v}" class="${val===v?'sel':''}">${v}</button>`).join('')+`</div>`;
+  return `<p class="section-desc">${escapeHtml(desc)}</p>`+
+    items.map(it=>`<div class="likert-row"><div class="lk-text">${escapeHtml(it.text)}</div>${dots(it.id, raw[it.id])}</div>`).join('') +
+    `<div class="likert-ends"><span>1 · ${lo}</span><span>${scale} · ${hi}</span></div>`;
+}
+function renderGottmanModule(p){
+  const g=p.gottmanRaw;
+  const styleOpts = GOTTMAN_STYLE.options.map(([v,l])=>`<button data-action="gstyle" data-v="${v}" class="${g.g_style===v?'sel':''}" style="text-align:left; flex:1 1 100%;">${escapeHtml(l)}</button>`).join('');
+  const dots=(id,val)=> `<div class="likert">`+[1,2,3,4,5].map(v=>`<button data-action="likert" data-store="gottman" data-id="${id}" data-v="${v}" class="${val===v?'sel':''}">${v}</button>`).join('')+`</div>`;
+  return `<p class="section-desc">${escapeHtml(GOTTMAN_STYLE.text)}</p><div class="opts" style="margin-bottom:8px;">${styleOpts}</div>
+    <div class="sub-label">During disagreements, how often is each true? (1 Never → 5 Very often)</div>`+
+    GOTTMAN_ITEMS.map(it=>`<div class="likert-row"><div class="lk-text">${escapeHtml(it.text)}</div>${dots(it.id, g[it.id])}</div>`).join('');
+}
 
+/* ---- dealbreakers ---- */
 function renderDealbreakers(){
-  const items = DEALBREAKERS.map(d => {
-    const checked = state.dealbreakers.includes(d.id);
-    return `<label><input type="checkbox" data-action="toggle-dealbreaker" data-id="${d.id}" ${checked?'checked':''}/><span>${d.text}</span></label>`;
+  const f = state.flow, p = f.profile;
+  const rows = DEALBREAKERS.map(d=>{
+    const own = p.dealbreakers[d.id];
+    const opts = d.options.map(([v,l])=>`<button data-action="db-answer" data-id="${d.id}" data-v="${v}" class="opts-btn ${own===v?'sel':''}" style="padding:8px 12px; background:var(--panel-2); border:1px solid ${own===v?'var(--gold)':'var(--panel-line)'}; border-radius:2px; color:${own===v?'var(--gold)':'var(--text-muted)'}; font-family:var(--font-body); font-size:0.84rem; cursor:pointer; margin-right:6px;">${escapeHtml(l)}</button>`).join('');
+    const nn = f.kind==='self' ? `<label class="nn-toggle"><input type="checkbox" data-action="db-nn" data-id="${d.id}" ${p.nonNegotiable[d.id]?'checked':''}/> Dealbreaker</label>` : '';
+    return `<div class="db-row"><div class="db-q">${escapeHtml(d.q)}<div style="margin-top:8px;">${opts}</div></div>${nn}</div>`;
   }).join('');
   const content = `
     <div class="panel">
       <p class="eyebrow">Last step</p>
       <h2 class="section-title">Non-negotiables</h2>
-      <p class="section-desc">Separate from the importance ratings — check anything that would end things outright, regardless of how well everything else lines up.</p>
-      <div class="check-list">${items}</div>
-      <p class="hint" style="margin-top:18px; margin-bottom:6px;">Anything else that's a hard line for you?</p>
-      <input class="text-input" data-action="other-dealbreaker-input" type="text" placeholder="Optional" value="${escapeHtml(state.dealbreakerOther)}"/>
+      <p class="section-desc">${f.kind==='self'
+        ? 'Answer each, and check <strong>Dealbreaker</strong> for any where a mismatch would end things outright — regardless of how well everything else scores.'
+        : 'Answer each as best you know for '+escapeHtml(p.name||'this person')+'.'}</p>
+      ${rows}
+      <p class="sub-label" style="margin-top:20px;">Anything else that's a hard line?</p>
+      <input class="text-input" id="dbOther" type="text" placeholder="Optional note" value="${escapeHtml(p.dealbreakerOther)}"/>
       <div class="btn-row">
-        <button class="btn ghost" data-action="dealbreakers-back">← Back</button>
-        <button class="btn primary" data-action="dealbreakers-done">See my blueprint →</button>
+        <button class="btn ghost" data-action="db-back">← Back</button>
+        <button class="btn primary" data-action="db-done">${f.kind==='candidate'?'Finish & export →':(f.kind==='proxy'?'See compatibility →':'See my blueprint →')}</button>
       </div>
-    </div>
-  `;
-  appEl.innerHTML = shell(content, 'Building your blueprint');
+    </div>`;
+  appEl.innerHTML = shell(content, 'Non-negotiables');
 }
 
-/* ====================== RENDER: PROFILE RESULTS ====================== */
-
+/* ---- self profile / results ---- */
 function renderProfile(){
-  const scores = categoryScores(state.answers);
-  const radarSvg = buildRadarSVG(CATEGORIES, [{label:'Your Blueprint', color:'#C9A35C', values:scores}], 320);
-  const profileHtml = generateProfileText();
+  const p = state.self; deriveAll(p);
+  const axes = profileAxisScores(p);
+  const radar = buildRadarSVG(COMPASS_AXES, [{color:'#C9A35C', values:axes}], 340);
+  const att = p.derived.attachment;
+  const g = p.derived.gottman;
+  const complete = profileHasFullData(p);
 
-  const rows = [...CATEGORIES].sort((a,b)=>scores[b.id]-scores[a.id]).map(c => `
-    <tr>
-      <td>${c.label}</td>
-      <td style="width:45%"><div class="bar-track"><div class="bar-fill" style="width:${scores[c.id]}%"></div></div></td>
-      <td style="font-family:var(--font-mono); text-align:right;">${scores[c.id]}</td>
-    </tr>
-  `).join('');
+  const catRows = [...RECIP_CATS].sort((a,b)=>axes[b.id]-axes[a.id]).map(c=>`
+    <tr><td>${c.label}</td><td style="width:45%"><div class="bar-track"><div class="bar-fill" style="width:${axes[c.id]}%"></div></div></td>
+    <td style="font-family:var(--font-mono); text-align:right;">${axes[c.id]}</td></tr>`).join('');
 
-  const dbChosen = DEALBREAKERS.filter(d => state.dealbreakers.includes(d.id));
-  const dbHtml = (dbChosen.length || state.dealbreakerOther)
-    ? `<div style="margin-top:18px;">` + dbChosen.map(d=>`<span class="tag rust">${d.text}</span>`).join('') + (state.dealbreakerOther ? `<span class="tag rust">${escapeHtml(state.dealbreakerOther)}</span>` : '') + `</div>`
-    : `<p class="hint" style="margin-top:14px;">No hard non-negotiables flagged.</p>`;
+  const psychHtml = complete ? renderSelfPsych(p) : `<div class="note-banner">Complete all modules to unlock your Big Five, attachment quadrant, and conflict-style read. <button class="btn ghost sm" data-action="start-self">Finish modules</button></div>`;
 
-  let candListHtml;
-  if (state.candidates.length){
-    const ranked = [...state.candidates].sort((a,b)=>
-      weightedCompatibility(scores, candidateCategoryScores(b.answers)) - weightedCompatibility(scores, candidateCategoryScores(a.answers))
-    );
-    candListHtml = `
-      <div class="rank-list">
-        ${ranked.map((cd,i)=>{
-          const score = weightedCompatibility(scores, candidateCategoryScores(cd.answers));
-          return `<div class="rank-row" data-action="view-candidate" data-id="${cd.id}" style="cursor:pointer;">
-            <span class="pos">${i+1}.</span>
-            <span class="name">${escapeHtml(cd.name || 'Candidate')}</span>
-            <span class="score">${score}%</span>
-          </div>`;
-        }).join('')}
-      </div>
-      <div class="btn-row">
-        <button class="btn ghost" data-action="add-candidate">+ Add another candidate</button>
-        ${state.candidates.length>1?'<button class="btn ghost" data-action="compare-all">Compare side by side</button>':''}
-      </div>
-    `;
-  } else {
-    candListHtml = `
-      <div class="empty-state" style="padding:24px 10px;"><p>No one to compare yet.</p></div>
-      <div class="btn-row" style="justify-content:center;">
-        <button class="btn primary" data-action="add-candidate">+ Add a candidate to compare</button>
-      </div>
-    `;
-  }
+  const dbChosen = DEALBREAKERS.filter(d=> p.nonNegotiable[d.id]);
+  const dbHtml = dbChosen.length||p.dealbreakerOther
+    ? `<div style="margin-top:14px;">`+dbChosen.map(d=>`<span class="tag rust">${DB_LABEL[d.id]}: ${escapeHtml((d.options.find(o=>o[0]===p.dealbreakers[d.id])||[])[1]||'—')}</span>`).join('')+(p.dealbreakerOther?`<span class="tag rust">${escapeHtml(p.dealbreakerOther)}</span>`:'')+`</div>`
+    : `<p class="hint" style="margin-top:12px;">No hard non-negotiables flagged.</p>`;
+
+  const candListHtml = renderCandidateList();
 
   const content = `
     <div class="toolbar">
-      <button class="btn ghost" data-action="export-json">Export blueprint (.json)</button>
-      <button class="btn ghost" data-action="import-json">Import</button>
-      <button class="btn ghost" data-action="retake">Retake quiz</button>
+      <button class="btn ghost sm" data-action="export-json">Export</button>
+      <button class="btn ghost sm" data-action="import-json">Import</button>
+      <button class="btn ghost sm" data-action="settings">Privacy</button>
+      <button class="btn ghost sm" data-action="retake">Retake</button>
     </div>
     <div class="panel">
       <p class="eyebrow">Your blueprint</p>
       <h2 class="section-title">What you're actually looking for</h2>
       <div class="results-grid">
-        <div class="chart-wrap">${radarSvg}</div>
-        <div class="profile-text">${profileHtml}</div>
+        <div class="chart-wrap">${radar}</div>
+        <div class="profile-text">${generateProfileText(p)}</div>
       </div>
       ${dbHtml}
     </div>
+    <div class="panel"><p class="eyebrow">Category emphasis</p><table class="breakdown"><tbody>${catRows}</tbody></table></div>
+    <div class="panel"><p class="eyebrow">Psychometrics</p>${psychHtml}</div>
     <div class="panel">
-      <p class="eyebrow">Category breakdown</p>
-      <table class="breakdown"><tbody>${rows}</tbody></table>
-    </div>
-    <div class="panel">
-      <p class="eyebrow">Compare against someone</p>
-      <p class="section-desc">Add a person you're considering and see how they line up against your blueprint — not a verdict, just a way to think it through.</p>
+      <p class="eyebrow">Candidates</p>
+      <p class="section-desc">Add someone to run the dealbreaker gate, reciprocal match, and TOPSIS ranking. For a true mutual score, have them fill their own questionnaire and import it.</p>
       ${candListHtml}
-    </div>
-  `;
+    </div>`;
   appEl.innerHTML = shell(content, 'Your blueprint');
 }
+function renderSelfPsych(p){
+  const bf=p.derived.bigFive, att=p.derived.attachment, g=p.derived.gottman;
+  const traitRow=(k,v)=>`<tr><td>${k}</td><td style="width:55%"><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/7*100)}%"></div></div></td><td style="font-family:var(--font-mono);text-align:right;">${v.toFixed(1)}</td></tr>`;
+  const quad = buildAttachmentQuadrant([{att, color:'#C9A35C', label:'You'}], 300);
+  const horse = ['criticism','contempt','defensiveness','stonewalling'].filter(h=> g[h]>=0.5);
+  return `<div class="results-grid">
+    <div>
+      <div class="sub-label">Big Five (TIPI)</div>
+      <table class="breakdown"><tbody>
+        ${traitRow('Openness',bf.O)}${traitRow('Conscientiousness',bf.C)}${traitRow('Extraversion',bf.E)}${traitRow('Agreeableness',bf.A)}${traitRow('Emotional stability',bf.ES)}
+      </tbody></table>
+    </div>
+    <div>
+      <div class="sub-label">Attachment — ${ATTACH_LABEL[att.style]}</div>
+      <div class="chart-wrap">${quad}</div>
+      <p class="hint" style="text-align:center;">Anxiety ${att.anxiety.toFixed(1)} · Avoidance ${att.avoidance.toFixed(1)}</p>
+    </div>
+  </div>
+  <div class="sub-label" style="margin-top:20px;">Conflict style — ${g.style?({validator:'Validator',volatile:'Volatile',avoider:'Conflict-Avoider'})[g.style]:'—'}</div>
+  ${horse.length?`<p class="hint">Watch-outs: ${horse.map(h=>`<span class="tag rust">${h}</span>`).join('')}<br/>${horse.map(h=>'<strong>'+h+'</strong> → '+HORSEMAN_ANTIDOTE[h]).join('<br/>')}</p>`:`<p class="hint">No elevated "Four Horsemen" patterns flagged in your self-report.</p>`}`;
+}
 
-/* ====================== RENDER: CANDIDATE FLOW ====================== */
+function renderCandidateList(){
+  const self = state.self;
+  if (!state.candidates.length){
+    return `<div class="empty-state" style="padding:20px;"><p>No candidates yet.</p></div>
+      <div class="btn-row" style="justify-content:center;"><button class="btn primary" data-action="add-candidate">+ Add a candidate</button></div>`;
+  }
+  const gated = state.candidates.map(c=>({c, gate:passesDealbreakers(self, c)}));
+  const survivors = gated.filter(x=>x.gate.pass).map(x=>x.c);
+  const excluded = gated.filter(x=>!x.gate.pass);
+  let rankIds = survivors.map(c=>c.id);
+  if (survivors.length>=2){
+    rankIds = rankTOPSIS(survivors.map(c=>topsisRow(self,c)), topsisCriteria()).map(r=>r.id);
+  } else if (survivors.length===1){
+    rankIds = [survivors[0].id];
+  }
+  const rankRows = rankIds.map((id,i)=>{
+    const c = survivors.find(x=>x.id===id);
+    const m = c.source==='quick' ? quickCompat(self,c) : calculateReciprocalMatch(self,c).mutualMatch;
+    const badge = c.source==='quick'?'<span class="tag">quick</span>':(c.source==='proxy'?'<span class="tag">proxy</span>':'');
+    return `<div class="rank-row" data-action="view-candidate" data-id="${id}" style="cursor:pointer;">
+      <span class="pos">${i+1}.</span><span class="name">${escapeHtml(c.name||'Candidate')} ${badge}</span><span class="score">${m}%</span></div>`;
+  }).join('');
+  const exclRows = excluded.map(x=>`<div class="rank-row excluded" data-action="view-candidate" data-id="${x.c.id}" style="cursor:pointer;">
+      <span class="pos">✕</span><span class="name">${escapeHtml(x.c.name||'Candidate')} <span class="tag rust">${x.gate.failed.map(f=>DB_LABEL[f]||f).join(', ')}</span></span><span class="score" style="color:var(--rust)">excluded</span></div>`).join('');
+  return `${survivors.length?`<div class="sub-label">Ranked${survivors.length>=2?' by TOPSIS closeness':' by reciprocal match'}</div><div class="rank-list">${rankRows}</div>`:''}
+    ${excluded.length?`<div class="sub-label" style="margin-top:18px; color:var(--rust);">Excluded by non-negotiables</div><div class="rank-list">${exclRows}</div>`:''}
+    <div class="btn-row"><button class="btn ghost" data-action="add-candidate">+ Add candidate</button>${survivors.length>=2?'<button class="btn ghost" data-action="compare-all">Compare compass</button>':''}</div>`;
+}
+function quickCompat(self, cand){
+  // legacy linear weighted average over reciprocal-category emphasis vs quick alignment sliders
+  const ideal = categoryScores(self); let num=0,den=0;
+  RECIP_CATS.forEach(c=>{ const w=ideal[c.id]; const a=cand.quick && cand.quick[c.id]!=null ? Math.round((cand.quick[c.id]-1)/4*100):0; num+=w*a; den+=w; });
+  return den>0?Math.round(num/den):0;
+}
 
-function renderCandIntro(){
+/* ---- add-candidate chooser ---- */
+function renderAddChoice(){
   const content = `
     <div class="panel">
-      <p class="eyebrow">New comparison</p>
+      <p class="eyebrow">New candidate</p>
+      <h2 class="section-title">How do you want to add them?</h2>
+      <div class="choice-cards">
+        <button class="choice-card" data-action="add-import"><h4>Import their questionnaire &nbsp;·&nbsp; best</h4><p>They fill out their own Partner Blueprint on their device and send you the file. Unlocks true reciprocal matching, TOPSIS ranking, and their attachment quadrant.</p></button>
+        <button class="choice-card" data-action="add-proxy"><h4>Answer as them &nbsp;·&nbsp; proxy estimate</h4><p>You fill the modules on their behalf. Full engine, flagged lower-confidence.</p></button>
+        <button class="choice-card" data-action="add-quick"><h4>Quick estimate</h4><p>Rate their alignment on six sliders. Fast, but no reciprocal or psychometric read.</p></button>
+      </div>
+      <div class="btn-row"><button class="btn ghost" data-action="back-to-profile">Cancel</button>
+        <button class="btn ghost" data-action="share-candidate-link">Copy candidate questionnaire link</button></div>
+    </div>`;
+  appEl.innerHTML = shell(content, 'Add a candidate');
+}
+function renderCandName(){
+  const p = state.flow.profile;
+  const content = `
+    <div class="panel">
+      <p class="eyebrow">${state.flow.kind==='proxy'?'Proxy estimate':'Quick estimate'}</p>
       <h2 class="section-title">Who are we comparing?</h2>
-      <p class="section-desc">Just a label so you can tell candidates apart later — a first name or initials is plenty.</p>
-      <input class="text-input" id="candNameInput" type="text" placeholder='e.g. "J." or a first name' value="${escapeHtml(state.draftCandidate.name)}"/>
-      <div class="btn-row">
-        <button class="btn ghost" data-action="cancel-candidate">Cancel</button>
-        <button class="btn primary" data-action="start-cand-quiz">Continue →</button>
-      </div>
-    </div>
-  `;
-  appEl.innerHTML = shell(content, 'Comparing a candidate');
+      <p class="section-desc">A first name or initials is plenty.</p>
+      <input class="text-input" id="candName" type="text" placeholder='e.g. "J."' value="${escapeHtml(p.name)}"/>
+      <div class="btn-row"><button class="btn ghost" data-action="back-to-profile">Cancel</button>
+        <button class="btn primary" data-action="cand-name-next">Continue →</button></div>
+    </div>`;
+  appEl.innerHTML = shell(content, 'Add a candidate');
 }
-
-function renderCandQuiz(){
-  const q = CANDIDATE_QUESTIONS[state.candQIndex];
-  const selected = state.draftCandidate.answers[q.id];
-  const railHtml = CANDIDATE_QUESTIONS.map((cq,i) => {
-    const filled = i < state.candQIndex ? 100 : (i===state.candQIndex ? 50 : 0);
-    const color = i===state.candQIndex ? 'var(--teal)' : 'var(--gold)';
-    return `<div class="seg"><i style="width:${filled}%; background:${color}"></i></div>`;
+function renderQuick(){
+  const p = state.flow.profile;
+  const rows = QUICK_QUESTIONS.map(q=>{
+    const v = p.quick ? p.quick[q.cat] : null;
+    const btns = [1,2,3,4,5].map(n=>`<button data-action="quick-answer" data-cat="${q.cat}" data-v="${n}" class="${v===n?'sel':''}">${n}</button>`).join('');
+    return `<div class="item"><p class="q-text" style="font-size:1.05rem;">${escapeHtml(q.text)}</p><div class="scale">${btns}</div><div class="scale-labels"><span>${q.low}</span><span>${q.high}</span></div></div>`;
   }).join('');
-  const scaleHtml = [1,2,3,4,5].map(v =>
-    `<button data-action="cand-answer" data-qid="${q.id}" data-value="${v}" class="${selected===v?'sel':''}">${v}</button>`
-  ).join('');
-
-  const content = `
-    <div class="rail-label">${escapeHtml(state.draftCandidate.name || 'This person')} — question ${state.candQIndex+1} of ${CANDIDATE_QUESTIONS.length}</div>
-    <div class="rail">${railHtml}</div>
-    <div class="panel">
-      <p class="q-cat">${CATEGORIES.find(c=>c.id===q.cat).label}</p>
-      <p class="q-text">${q.text}</p>
-      <div class="scale">${scaleHtml}</div>
-      <div class="scale-labels"><span>${q.low}</span><span>${q.high}</span></div>
-      <div class="btn-row">
-        <button class="btn ghost" data-action="cand-quiz-back">← Back</button>
-        <button class="btn primary" data-action="cand-quiz-next" ${selected===undefined?'disabled':''}>${state.candQIndex===CANDIDATE_QUESTIONS.length-1?'Continue':'Next'}</button>
-      </div>
-    </div>
-  `;
-  appEl.innerHTML = shell(content, 'Comparing a candidate');
+  const done = QUICK_QUESTIONS.every(q=> p.quick && p.quick[q.cat]!=null);
+  const content = `<div class="panel"><p class="eyebrow">Quick estimate</p>
+    <h2 class="section-title">${escapeHtml(p.name||'This person')}</h2>${rows}
+    <div class="btn-row"><button class="btn ghost" data-action="back-to-profile">Cancel</button>
+    <button class="btn primary" data-action="quick-done" ${done?'':'disabled'}>See compatibility →</button></div></div>`;
+  appEl.innerHTML = shell(content, 'Quick estimate');
 }
 
-function renderCandDealbreakers(){
-  const items = DEALBREAKERS.map(d => {
-    const checked = state.draftCandidate.dealbreakers.includes(d.id);
-    return `<label><input type="checkbox" data-action="toggle-cand-dealbreaker" data-id="${d.id}" ${checked?'checked':''}/><span>${d.text}</span></label>`;
-  }).join('');
-  const content = `
-    <div class="panel">
-      <p class="eyebrow">Last step</p>
-      <h2 class="section-title">Any red flags?</h2>
-      <p class="section-desc">Check anything you've noticed in ${escapeHtml(state.draftCandidate.name || 'this person')} that matches one of your non-negotiables.</p>
-      <div class="check-list">${items}</div>
-      <p class="hint" style="margin-top:18px; margin-bottom:6px;">Anything else worth noting?</p>
-      <input class="text-input" id="candOtherInput" type="text" placeholder="Optional" value="${escapeHtml(state.draftCandidate.dealbreakerOther)}"/>
-      <div class="btn-row">
-        <button class="btn ghost" data-action="cand-dealbreakers-back">← Back</button>
-        <button class="btn primary" data-action="cand-dealbreakers-done">See compatibility →</button>
-      </div>
-    </div>
-  `;
-  appEl.innerHTML = shell(content, 'Comparing a candidate');
-}
-
+/* ---- candidate result ---- */
 function renderCandResult(){
-  const cand = state.candidates.find(c => c.id === state.lastCandidateResultId);
-  if (!cand){ state.view = 'profile'; renderProfile(); return; }
+  const self=state.self; deriveAll(self);
+  const cand = state.candidates.find(c=>c.id===state.lastCandidateId);
+  if(!cand){ setView('profile'); return; }
+  if (cand.source!=='quick') deriveAll(cand);
+  const gate = passesDealbreakers(self, cand);
+  const quick = cand.source==='quick';
 
-  const idealScores = categoryScores(state.answers);
-  const candScores = candidateCategoryScores(cand.answers);
-  const compat = weightedCompatibility(idealScores, candScores);
-  const radarSvg = buildRadarSVG(CATEGORIES, [
-    {label:'Your Blueprint', color:'#C9A35C', values: idealScores},
-    {label: cand.name || 'Candidate', color:'#5FA8A0', dashed:true, values: candScores}
-  ], 320);
+  let scoreBlock, chartBlock, psychBlock='';
+  if (quick){
+    const m = quickCompat(self,cand);
+    const axes6 = RECIP_CATS.map(c=>({id:c.id,short:c.short}));
+    const idealV = categoryScores(self);
+    const candV = {}; RECIP_CATS.forEach(c=> candV[c.id]= cand.quick&&cand.quick[c.id]!=null?Math.round((cand.quick[c.id]-1)/4*100):0);
+    chartBlock = buildRadarSVG(axes6, [{color:'#C9A35C',values:idealV},{color:'#5FA8A0',dashed:true,values:candV}], 320);
+    scoreBlock = `<div class="stat-grid"><div class="stat"><div class="k">Quick alignment</div><div class="v">${m}%</div></div></div>
+      <div class="note-banner">Quick estimate — your subjective read on six categories. Import their questionnaire for a true reciprocal score.</div>`;
+  } else {
+    const rm = calculateReciprocalMatch(self,cand);
+    const idealAxes = profileAxisScores(self);
+    const candAxes = candidateAxisScores(self,cand);
+    chartBlock = buildRadarSVG(COMPASS_AXES, [{color:'#C9A35C',values:idealAxes},{color:'#5FA8A0',dashed:true,values:candAxes}], 340);
+    scoreBlock = `<div class="stat-grid">
+      <div class="stat"><div class="k">Mutual match</div><div class="v teal">${rm.mutualMatch}%</div></div>
+      <div class="stat"><div class="k">You → them</div><div class="v">${rm.aToB}%</div></div>
+      <div class="stat"><div class="k">Them → you</div><div class="v">${rm.bToA}%</div></div>
+      <div class="stat"><div class="k">Shared items</div><div class="v">${rm.shared}</div></div></div>
+      ${cand.source==='proxy'?'<div class="note-banner">Proxy estimate — answered on their behalf, so treat as lower-confidence.</div>':''}`;
+    psychBlock = renderCandPsych(self, cand);
+  }
 
-  const violated = DEALBREAKERS.filter(d => state.dealbreakers.includes(d.id) && cand.dealbreakers.includes(d.id));
-
-  const rows = [...CATEGORIES].sort((a,b)=>idealScores[b.id]-idealScores[a.id]).map(c => `
-    <tr>
-      <td>${c.label}</td>
-      <td style="width:26%"><div class="bar-track"><div class="bar-fill" style="width:${idealScores[c.id]}%"></div></div></td>
-      <td style="width:26%"><div class="bar-track"><div class="bar-fill cand" style="width:${candScores[c.id]}%"></div></div></td>
-      <td style="font-family:var(--font-mono); text-align:right;">${candScores[c.id]}</td>
-    </tr>
-  `).join('');
-
-  const dbWarning = violated.length ? `
-    <div class="dealbreaker-flag">
-      <strong>⚠ ${violated.length} non-negotiable${violated.length>1?'s':''} flagged:</strong><br/>
-      ${violated.map(d=>d.text).join('; ')}.<br/>
-      That matters more than the percentage below — a dealbreaker stays a dealbreaker regardless of how well everything else scores.
-    </div>` : '';
-  const otherNote = cand.dealbreakerOther ? `<p class="hint" style="margin-top:14px;">Other note: ${escapeHtml(cand.dealbreakerOther)}</p>` : '';
+  const gateBanner = !gate.pass ? `<div class="warn-banner"><strong>⚠ CRITICAL — non-compensatory exclusion.</strong> This candidate triggers a hard non-negotiable (${gate.failed.map(f=>DB_LABEL[f]||f).join(', ')}). Relational success is non-compensatory: strong scores elsewhere cannot offset a core misalignment or a behavioral-safety flag. They are excluded from ranking.</div>` : '';
 
   const content = `
-    <div class="toolbar">
-      <button class="btn ghost" data-action="back-to-profile">← Back to blueprint</button>
-    </div>
+    <div class="toolbar"><button class="btn ghost sm" data-action="back-to-profile">← Blueprint</button>
+      <button class="btn ghost sm" data-action="add-checkup" data-id="${cand.id}">+ Post-date check-in</button>
+      <button class="btn ghost sm" data-action="delete-candidate" data-id="${cand.id}">Delete</button></div>
     <div class="panel">
       <p class="eyebrow">Compatibility read</p>
-      <h2 class="section-title">${escapeHtml(cand.name || 'This candidate')} <span style="color:var(--teal); font-family:var(--font-mono); font-size:0.85rem; text-transform:uppercase; letter-spacing:0.06em;">${compat}% weighted match</span></h2>
-      <div class="results-grid">
-        <div class="chart-wrap">${radarSvg}</div>
-        <div>
-          <div class="legend" style="justify-content:flex-start;">
-            <span class="legend-item"><span class="swatch" style="background:#C9A35C;"></span>Your blueprint</span>
-            <span class="legend-item"><span class="swatch" style="background:#5FA8A0;"></span>${escapeHtml(cand.name || 'Candidate')}</span>
-          </div>
-          ${dbWarning}
-          ${otherNote}
-        </div>
-      </div>
+      <h2 class="section-title">${escapeHtml(cand.name||'This candidate')}</h2>
+      ${gateBanner}
+      <div class="results-grid"><div class="chart-wrap">${chartBlock}</div><div>${scoreBlock}</div></div>
+      <div class="legend"><span class="legend-item"><span class="swatch" style="background:#C9A35C"></span>You</span><span class="legend-item"><span class="swatch" style="background:#5FA8A0"></span>${escapeHtml(cand.name||'Candidate')}</span></div>
     </div>
-    <div class="panel">
-      <p class="eyebrow">Category breakdown</p>
-      <table class="breakdown">
-        <thead><tr><th>Category</th><th>Your priority</th><th>Their alignment</th><th style="text-align:right;">Score</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-    <div class="btn-row">
-      <button class="btn ghost" data-action="add-candidate">+ Add another candidate</button>
-      ${state.candidates.length>1?'<button class="btn primary" data-action="compare-all">Compare side by side</button>':''}
-    </div>
-  `;
-  appEl.innerHTML = shell(content, 'Comparing a candidate');
+    ${psychBlock}
+    ${renderCheckups(cand)}`;
+  appEl.innerHTML = shell(content, 'Candidate read');
 }
-
-function renderCompare(){
-  const idealScores = categoryScores(state.answers);
-  const palette = ['#5FA8A0','#7C93C9','#B58A5C','#9C7FB0','#7FAE7F','#C97F9C'];
-  const scored = state.candidates.map((cd,i) => {
-    const cs = candidateCategoryScores(cd.answers);
-    return {cd, cs, compat: weightedCompatibility(idealScores, cs), color: palette[i % palette.length]};
-  }).sort((a,b)=> b.compat-a.compat);
-
-  const datasets = [{label:'Your Blueprint', color:'#C9A35C', values: idealScores}];
-  scored.forEach(s => datasets.push({label: s.cd.name || 'Candidate', color: s.color, dashed:true, values: s.cs}));
-  const radarSvg = buildRadarSVG(CATEGORIES, datasets, 360);
-  const legendHtml = datasets.map(d => `<span class="legend-item"><span class="swatch" style="background:${d.color}"></span>${escapeHtml(d.label)}</span>`).join('');
-
-  const rankHtml = scored.map((s,i) => {
-    const violated = DEALBREAKERS.filter(d => state.dealbreakers.includes(d.id) && s.cd.dealbreakers.includes(d.id));
-    return `<div class="rank-row" data-action="view-candidate" data-id="${s.cd.id}" style="cursor:pointer;">
-      <span class="pos">${i+1}.</span>
-      <span class="name">${escapeHtml(s.cd.name || 'Candidate')}${violated.length ? ' <span class="tag rust">'+violated.length+' flag'+(violated.length>1?'s':'')+'</span>' : ''}</span>
-      <span class="score">${s.compat}%</span>
-    </div>`;
+function renderCandPsych(self, cand){
+  const att = cand.derived && cand.derived.attachment;
+  const g = cand.derived && cand.derived.gottman;
+  if (!att && !g) return '';
+  let pairing='';
+  if (att && self.derived.attachment){
+    const pr = attachmentPairing(self.derived.attachment, att);
+    const quad = buildAttachmentQuadrant([{att:self.derived.attachment,color:'#C9A35C',label:'You'},{att,color:'#5FA8A0',label:cand.name||'Them'}], 300);
+    pairing = `<div class="results-grid"><div class="chart-wrap">${quad}</div>
+      <div><div class="sub-label">Attachment pairing — ${pr.rating}</div><p class="hint">You: ${ATTACH_LABEL[self.derived.attachment.style]} · Them: ${ATTACH_LABEL[att.style]}.<br/>${pr.note}</p></div></div>`;
+  }
+  let horse='';
+  if (g){
+    const flags=['criticism','contempt','defensiveness','stonewalling'].filter(h=>g[h]>=0.5);
+    horse = flags.length?`<div class="sub-label" style="margin-top:16px;">Conflict watch-outs</div><p class="hint">${flags.map(h=>`<span class="tag rust">${h}</span>`).join('')} — ${flags.map(h=>HORSEMAN_ANTIDOTE[h]).join(' ')}</p>`:'';
+  }
+  return `<div class="panel"><p class="eyebrow">Attachment & conflict</p>${pairing}${horse}</div>`;
+}
+function renderCheckups(cand){
+  if (!cand.checkups || !cand.checkups.length) return '';
+  const series = CHECKUP_ITEMS.map(it=>({it, vals:cand.checkups.map(ch=>ch[it.id]).filter(v=>v!=null)}));
+  return `<div class="panel"><p class="eyebrow">Post-date check-ins (${cand.checkups.length})</p>
+    <p class="section-desc">Lived experience is the strongest signal (Joel et al., 2020). Trends over your interactions:</p>
+    <table class="breakdown"><tbody>${series.map(s=>`<tr><td>${escapeHtml(s.it.text)}</td><td style="text-align:right;">${buildSparkline(s.vals)}</td><td style="font-family:var(--font-mono);text-align:right;">${s.vals.length?s.vals[s.vals.length-1]:'—'}/7</td></tr>`).join('')}</tbody></table></div>`;
+}
+function renderCheckupForm(){
+  const cand = state.candidates.find(c=>c.id===state.checkupFor);
+  if(!cand){ setView('profile'); return; }
+  const draft = state.checkupDraft || {};
+  const rows = CHECKUP_ITEMS.map(it=>{
+    const v = draft[it.id]||4;
+    return `<div class="item"><p class="q-text" style="font-size:1.05rem;">${escapeHtml(it.text)}</p>
+      <input class="slider" type="range" min="1" max="7" value="${v}" data-action="checkup-slide" data-id="${it.id}"/>
+      <div class="scale-labels"><span>1 · Low</span><span id="cv_${it.id}">${v}</span><span>7 · High</span></div></div>`;
   }).join('');
+  const content=`<div class="panel"><p class="eyebrow">Post-date check-in</p>
+    <h2 class="section-title">${escapeHtml(cand.name||'Candidate')}</h2>
+    <p class="section-desc">How did it actually feel? This appends to their profile over time.</p>${rows}
+    <div class="btn-row"><button class="btn ghost" data-action="view-candidate" data-id="${cand.id}">Cancel</button>
+    <button class="btn primary" data-action="checkup-save">Save check-in</button></div></div>`;
+  appEl.innerHTML = shell(content, 'Post-date check-in');
+}
 
-  const content = `
-    <div class="toolbar">
-      <button class="btn ghost" data-action="back-to-profile">← Back to blueprint</button>
+/* ---- compare compass ---- */
+function renderCompare(){
+  const self=state.self; deriveAll(self);
+  const full = state.candidates.filter(c=>c.source!=='quick' && passesDealbreakers(self,c).pass);
+  full.forEach(c=>deriveAll(c));
+  const palette=['#5FA8A0','#7C93C9','#B58A5C','#9C7FB0','#7FAE7F','#C97F9C'];
+  const datasets=[{color:'#C9A35C',values:profileAxisScores(self)}];
+  full.forEach((c,i)=> datasets.push({color:palette[i%palette.length],dashed:true,values:candidateAxisScores(self,c)}));
+  const radar = buildRadarSVG(COMPASS_AXES, datasets, 380);
+  const legend = [`<span class="legend-item"><span class="swatch" style="background:#C9A35C"></span>You</span>`]
+    .concat(full.map((c,i)=>`<span class="legend-item"><span class="swatch" style="background:${palette[i%palette.length]}"></span>${escapeHtml(c.name||'Candidate')}</span>`)).join('');
+  const content=`<div class="toolbar"><button class="btn ghost sm" data-action="back-to-profile">← Blueprint</button></div>
+    <div class="panel"><p class="eyebrow">Side by side</p><h2 class="section-title">Joint compass — ${full.length} candidate${full.length!==1?'s':''}</h2>
+    <div class="chart-wrap">${radar}</div><div class="legend">${legend}</div>
+    ${full.length<1?'<div class="empty-state"><p>Add candidates with full questionnaires to compare.</p></div>':''}</div>`;
+  appEl.innerHTML = shell(content, 'Compare');
+}
+
+/* ---- candidate-mode finished (export) ---- */
+function renderCandidateExport(){
+  const content=`<div class="panel"><p class="eyebrow">Thank you</p>
+    <h2 class="section-title">Your questionnaire is complete</h2>
+    <p class="section-desc">Download your file and send it to the person who invited you. It stays private — they import it into their own copy to see how you two line up. Nothing is uploaded anywhere.</p>
+    <div class="btn-row">
+      <button class="btn primary" data-action="candidate-export">Download my questionnaire (.json)</button>
+      <button class="btn ghost" data-action="candidate-export-enc">Download encrypted (passphrase)</button>
+    </div></div>`;
+  appEl.innerHTML = shell(content, 'Candidate questionnaire');
+}
+function renderCandidateIntro(){
+  const content=`<div class="panel intro"><p class="eyebrow">You've been invited</p>
+    <h2>Fill out your Partner Blueprint</h2>
+    <p>Someone wants to see how compatible you two are — on values, communication, lifestyle, finances, personality, and attachment. It takes a few minutes. Your answers stay on your device; you'll download a file to send back. Nothing is uploaded.</p>
+    <div class="btn-row"><button class="btn primary" data-action="candidate-start">Begin →</button></div></div>`;
+  appEl.innerHTML = shell(content, 'Candidate questionnaire');
+}
+
+/* ---- settings / crypto ---- */
+function renderSettings(){
+  const content=`<div class="toolbar"><button class="btn ghost sm" data-action="back-to-profile">← Back</button></div>
+    <div class="panel"><p class="eyebrow">Privacy &amp; data</p><h2 class="section-title">Local encryption</h2>
+    <p class="section-desc">Your data lives only in this browser. Turn on encryption to protect it at rest with a passphrase (PBKDF2 + AES-GCM, ${PBKDF2_ITERS.toLocaleString()} iterations). ${hasCrypto?'':'<strong>Web Crypto is unavailable here</strong> — encryption is disabled.'}</p>
+    ${state.encEnabled
+      ? `<p class="hint">Encryption is <strong>on</strong>. <button class="btn ghost sm" data-action="disable-enc">Turn off</button></p>`
+      : `<div class="item"><div class="sub-label">Set a passphrase</div>
+          <input class="text-input" id="pass1" type="password" placeholder="Passphrase"/>
+          <input class="text-input" id="pass2" type="password" placeholder="Confirm passphrase" style="margin-top:8px;"/>
+          <div class="warn-banner" style="margin-top:12px;"><strong>No recovery.</strong> If you lose this passphrase, your saved data cannot be recovered. Keep an exported backup.</div>
+          <div class="btn-row"><button class="btn primary" data-action="enable-enc" ${hasCrypto?'':'disabled'}>Enable encryption</button></div></div>`}
     </div>
-    <div class="panel">
-      <p class="eyebrow">Side by side</p>
-      <h2 class="section-title">Comparing ${state.candidates.length} candidate${state.candidates.length>1?'s':''}</h2>
-      <div class="chart-wrap">${radarSvg}</div>
-      <div class="legend">${legendHtml}</div>
-    </div>
-    <div class="panel">
-      <p class="eyebrow">Ranked</p>
-      <div class="rank-list">${rankHtml}</div>
-      <div class="btn-row"><button class="btn ghost" data-action="add-candidate">+ Add another candidate</button></div>
-    </div>
-  `;
-  appEl.innerHTML = shell(content, 'Side by side comparison');
+    <div class="panel"><p class="eyebrow">Backup</p>
+      <p class="section-desc">Browser storage can be cleared by the browser. Export a file you keep yourself as the durable backup.</p>
+      <div class="btn-row"><button class="btn ghost" data-action="export-json">Export (.json)</button>
+        <button class="btn ghost" data-action="export-json-enc">Export encrypted</button>
+        <button class="btn ghost" data-action="import-json">Import</button></div></div>`;
+  appEl.innerHTML = shell(content, 'Privacy & data');
+}
+function renderUnlock(err){
+  const content=`<div class="panel"><p class="eyebrow">Locked</p><h2 class="section-title">Enter your passphrase</h2>
+    <p class="section-desc">Your blueprint is encrypted on this device.</p>
+    <input class="text-input" id="unlockPass" type="password" placeholder="Passphrase"/>
+    ${err?`<div class="warn-banner" style="margin-top:12px;">Incorrect passphrase — try again.</div>`:''}
+    <div class="btn-row"><button class="btn primary" data-action="unlock">Unlock →</button>
+      <button class="btn ghost" data-action="import-json">Import a backup instead</button></div></div>`;
+  appEl.innerHTML = shell(content, 'Locked');
 }
 
-/* ====================== EXPORT / IMPORT ====================== */
-
-function exportJSON(){
-  const data = {
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    answers: state.answers,
-    dealbreakers: state.dealbreakers,
-    dealbreakerOther: state.dealbreakerOther,
-    candidates: state.candidates,
-  };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'partner-blueprint.json';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+/* ---- profile narrative ---- */
+function generateProfileText(p){
+  const scores = categoryScores(p);
+  const ranked = [...RECIP_CATS].sort((a,b)=>scores[b.id]-scores[a.id]);
+  const top=ranked[0], second=ranked[1], low=ranked[ranked.length-1];
+  let p1 = `Your priorities cluster most strongly around <strong>${top.label.toLowerCase()}</strong> and <strong>${second.label.toLowerCase()}</strong>, and <strong>${low.label.toLowerCase()}</strong> matters comparatively less — worth not over-weighting when you evaluate someone.`;
+  let p2='';
+  const att = p.derived && p.derived.attachment;
+  if (att){
+    const map={secure:'a <strong>secure</strong> tendency — comfortable with closeness and able to self-soothe, which lets you be an emotional anchor',
+      anxious:'an <strong>anxious-preoccupied</strong> lean — you value closeness and reassurance, and do best with a steady, consistent partner',
+      dismissive:'a <strong>dismissive-avoidant</strong> lean — you prize independence, so a partner who respects space will fit better',
+      fearful:'a <strong>fearful-avoidant</strong> lean — you want closeness but it can feel unsafe; steadiness and patience matter most'};
+    p2 = `Your attachment responses suggest ${map[att.style]}.`;
+  }
+  let p3='';
+  const bf = p.derived && p.derived.bigFive;
+  if (bf){
+    const hi=[['openness',bf.O],['conscientiousness',bf.C],['extraversion',bf.E],['warmth',bf.A],['emotional stability',bf.ES]].sort((a,b)=>b[1]-a[1])[0][0];
+    p3 = `On personality, your strongest self-rated trait is <strong>${hi}</strong> — a useful thing to seek reciprocity on.`;
+  }
+  return [p1,p2,p3].filter(Boolean).map(x=>`<p>${x}</p>`).join('');
 }
 
-/* ====================== STATE TRANSITIONS ====================== */
-
-function startQuiz(){
-  const firstUnanswered = QUESTIONS.findIndex(q => state.answers[q.id] === undefined);
-  if (firstUnanswered === -1){ state.view = 'dealbreakers'; }
-  else { state.qIndex = firstUnanswered; state.view = 'quiz'; }
-  render();
-}
-
-function resetAll(){
-  state.answers = {};
-  state.dealbreakers = [];
-  state.dealbreakerOther = '';
-  state.qIndex = 0;
-  state.view = 'intro';
-  render();
-}
-
-/* ====================== RENDER DISPATCH ====================== */
-
-const appEl = document.getElementById('app');
-
+/* ---- dispatch ---- */
 function render(){
   switch(state.view){
+    case 'boot': appEl.innerHTML=shell('<div class="empty-state"><p>Loading…</p></div>'); break;
+    case 'unlock': renderUnlock(false); break;
     case 'intro': renderIntro(); break;
-    case 'quiz': renderQuiz(); break;
+    case 'module': renderModule(); break;
     case 'dealbreakers': renderDealbreakers(); break;
     case 'profile': renderProfile(); break;
-    case 'candIntro': renderCandIntro(); break;
-    case 'candQuiz': renderCandQuiz(); break;
-    case 'candDealbreakers': renderCandDealbreakers(); break;
+    case 'addChoice': renderAddChoice(); break;
+    case 'candName': renderCandName(); break;
+    case 'quick': renderQuick(); break;
     case 'candResult': renderCandResult(); break;
     case 'compare': renderCompare(); break;
+    case 'checkup': renderCheckupForm(); break;
+    case 'settings': renderSettings(); break;
+    case 'candidateIntro': renderCandidateIntro(); break;
+    case 'candidateExport': renderCandidateExport(); break;
     default: renderIntro();
   }
-  bindExtra();
-  window.scrollTo(0,0);
+  bindInputs();
+}
+function bindInputs(){
+  const bind=(id,fn)=>{ const el=document.getElementById(id); if(el) el.addEventListener('input', fn); };
+  bind('dbOther', e=>{ state.flow.profile.dealbreakerOther = e.target.value; });
+  bind('candName', e=>{ state.flow.profile.name = e.target.value; });
+  document.querySelectorAll('[data-action="checkup-slide"]').forEach(el=> el.addEventListener('input', e=>{
+    const id=e.target.dataset.id; state.checkupDraft=state.checkupDraft||{}; state.checkupDraft[id]=parseInt(e.target.value,10);
+    const lbl=document.getElementById('cv_'+id); if(lbl) lbl.textContent=e.target.value;
+  }));
 }
 
-function bindExtra(){
-  const other = document.querySelector('[data-action="other-dealbreaker-input"]');
-  if (other) other.addEventListener('input', e => { state.dealbreakerOther = e.target.value; });
-  const candName = document.getElementById('candNameInput');
-  if (candName) candName.addEventListener('input', e => { state.draftCandidate.name = e.target.value; });
-  const candOther = document.getElementById('candOtherInput');
-  if (candOther) candOther.addEventListener('input', e => { state.draftCandidate.dealbreakerOther = e.target.value; });
+/* =============================== [EXPORT] ============================= */
+
+function download(obj, filename){
+  const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+function appData(){ return { format:'partner-blueprint', schemaVersion:SCHEMA_VERSION, exportedAt:nowISO(), self:state.self, candidates:state.candidates }; }
+
+async function exportJSON(encrypted){
+  let payload = appData();
+  if (encrypted){
+    if (!hasCrypto){ alert('Encryption unavailable in this browser.'); return; }
+    const pass = prompt('Passphrase to encrypt this export:'); if(!pass) return;
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const key = await deriveKey(pass, salt);
+    const env = await encryptJSON(payload, key); env.format='partner-blueprint'; env.salt=b64(salt);
+    payload = env;
+  }
+  download(payload, encrypted?'partner-blueprint.enc.json':'partner-blueprint.json');
+}
+function exportCandidate(encrypted){
+  const p = state.flow ? state.flow.profile : state.self;
+  const obj = { format:'partner-blueprint-candidate', schemaVersion:SCHEMA_VERSION, exportedAt:nowISO(), profile:p };
+  if (encrypted){
+    if(!hasCrypto){ alert('Encryption unavailable.'); return; }
+    const pass = prompt('Passphrase (share it with the person you send this to):'); if(!pass) return;
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    deriveKey(pass, salt).then(async key=>{ const env=await encryptJSON(obj,key); env.format='partner-blueprint-candidate'; env.salt=b64(salt); download(env,'candidate-blueprint.enc.json'); });
+    return;
+  }
+  download(obj, 'candidate-blueprint.json');
 }
 
-/* ====================== EVENT DELEGATION ====================== */
+function migrateV1toV2(data){
+  const p = emptyProfile('self','self');
+  const ans = data.answers||{};
+  // v1 used ids like v1..t5 under 6 categories; map any numeric answer into a somewhat-important response
+  Object.keys(ans).forEach(qid=>{ p.responses[qid] = {answer:ans[qid], preferred:[ans[qid]], importance:'somewhat'}; });
+  (data.dealbreakers||[]).forEach(()=>{}); // legacy free-form ids can't map to keyed dims; leave for user
+  p.dealbreakerOther = data.dealbreakerOther||'';
+  state.self = p; state.candidates = (data.candidates||[]).map(c=>({ ...emptyProfile(c.id||nextId(),'quick'), name:c.name||'', quick:c.answers?remapQuick(c.answers):{} }));
+  state.toast = 'Imported an older blueprint. Re-answer the modules to unlock the full engine.';
+}
+function remapQuick(a){ const q={}; RECIP_CATS.forEach(c=>{ if(a['cand_'+c.id]!=null) q[c.id]=a['cand_'+c.id]; }); return q; }
 
-appEl.addEventListener('click', e => {
-  const t = e.target.closest('[data-action]');
-  if (!t) return;
-  const action = t.dataset.action;
+function loadAppData(data){
+  state.self = data.self || emptyProfile('self','self');
+  state.candidates = data.candidates || [];
+  deriveAll(state.self); state.candidates.forEach(c=>{ if(c.source!=='quick') deriveAll(c); });
+}
 
-  switch(action){
-    case 'start-quiz': startQuiz(); break;
-    case 'retake':
-      if (confirm('Clear your blueprint answers and start over? Saved candidates are kept.')) resetAll();
-      break;
-    case 'quiz-back': state.qIndex = Math.max(0, state.qIndex-1); render(); break;
-    case 'quiz-next':
-      if (state.qIndex === QUESTIONS.length-1) state.view = 'dealbreakers'; else state.qIndex++;
-      render(); break;
-    case 'answer': state.answers[t.dataset.qid] = parseInt(t.dataset.value,10); render(); break;
-    case 'toggle-dealbreaker': {
-      const id = t.dataset.id;
-      const i = state.dealbreakers.indexOf(id);
-      if (i===-1) state.dealbreakers.push(id); else state.dealbreakers.splice(i,1);
-      render(); break;
-    }
-    case 'dealbreakers-back': state.view='quiz'; state.qIndex = QUESTIONS.length-1; render(); break;
-    case 'dealbreakers-done': state.view='profile'; render(); break;
+async function handleImport(text){
+  let obj; try{ obj=JSON.parse(text); }catch(e){ alert('That file is not valid JSON.'); return; }
+  // encrypted envelope?
+  if (obj && obj.enc && obj.ct){
+    if(!hasCrypto){ alert('Encrypted file, but Web Crypto is unavailable here.'); return; }
+    const pass = prompt('Passphrase to decrypt this file:'); if(!pass) return;
+    try{ const salt=unb64(obj.salt); const key=await deriveKey(pass,salt); obj = await decryptJSON(obj,key); }
+    catch(e){ alert('Incorrect passphrase or corrupted file.'); return; }
+  }
+  if (obj.format==='partner-blueprint-candidate' || obj.profile){
+    const prof = obj.profile; prof.id = prof.id && prof.id!=='self' ? prof.id : nextId();
+    prof.source = 'candidate-self'; deriveAll(prof);
+    state.candidates.push(prof); state.lastCandidateId = prof.id;
+    await save(); setView('candResult'); return;
+  }
+  if (obj.schemaVersion===2 || obj.self){ loadAppData(obj); }
+  else if (obj.version===1 || obj.answers){ migrateV1toV2(obj); }
+  else { alert('Unrecognized file.'); return; }
+  // Recovery via the locked screen's "import a backup instead": we have no key, so
+  // turn encryption off (the imported backup is now the plaintext source) rather than
+  // silently skip persistence. The user can re-enable encryption afterward.
+  if (state.encEnabled && !state.cryptoKey){
+    state.encEnabled=false; state.saltB64=null; state.locked=false;
+    state.toast='Recovered from backup — encryption is now off. Re-enable it in Privacy & data.';
+  }
+  await save();
+  setView(profileHasAnyData(state.self)?'profile':'intro');
+}
 
-    case 'add-candidate':
-      state.draftCandidate = {id: nextId(), name:'', answers:{}, dealbreakers:[], dealbreakerOther:''};
-      state.candQIndex = 0; state.view = 'candIntro'; render(); break;
-    case 'cancel-candidate': state.draftCandidate = null; state.view = 'profile'; render(); break;
-    case 'start-cand-quiz': state.candQIndex = 0; state.view = 'candQuiz'; render(); break;
-    case 'cand-answer': state.draftCandidate.answers[t.dataset.qid] = parseInt(t.dataset.value,10); render(); break;
-    case 'cand-quiz-back':
-      if (state.candQIndex === 0) state.view = 'candIntro'; else state.candQIndex--;
-      render(); break;
-    case 'cand-quiz-next':
-      if (state.candQIndex === CANDIDATE_QUESTIONS.length-1) state.view = 'candDealbreakers'; else state.candQIndex++;
-      render(); break;
-    case 'toggle-cand-dealbreaker': {
-      const id = t.dataset.id;
-      const arr = state.draftCandidate.dealbreakers;
-      const i = arr.indexOf(id);
-      if (i===-1) arr.push(id); else arr.splice(i,1);
-      render(); break;
-    }
-    case 'cand-dealbreakers-back': state.view='candQuiz'; state.candQIndex = CANDIDATE_QUESTIONS.length-1; render(); break;
-    case 'cand-dealbreakers-done': {
-      state.candidates.push(state.draftCandidate);
-      state.lastCandidateResultId = state.draftCandidate.id;
-      state.draftCandidate = null;
-      state.view = 'candResult';
-      render(); break;
-    }
-    case 'view-candidate': state.lastCandidateResultId = t.dataset.id; state.view = 'candResult'; render(); break;
-    case 'back-to-profile': state.view = 'profile'; render(); break;
-    case 'compare-all': state.view = 'compare'; render(); break;
+/* =============================== [EVENTS] ============================= */
 
-    case 'export-json': exportJSON(); break;
+function startSelfFlow(){
+  const idx = FULL_MODULES.findIndex(m=> !isComplete(state.self,m));
+  state.flow = { kind:'self', profile:state.self, moduleIndex: idx===-1?0:idx, returnView:'profile' };
+  setView('module');
+}
+function advanceModule(dir){
+  const f=state.flow;
+  if (dir<0){
+    if (f.moduleIndex===0){ setView(f.kind==='candidate'?'candidateIntro':(f.kind==='self'?'intro':'addChoice')); return; }
+    f.moduleIndex--; setView('module'); return;
+  }
+  if (f.moduleIndex===FULL_MODULES.length-1){ setView('dealbreakers'); return; }
+  f.moduleIndex++; setView('module');
+}
+
+appEl.addEventListener('click', async e=>{
+  const t=e.target.closest('[data-action]'); if(!t) return;
+  const a=t.dataset.action;
+  switch(a){
+    case 'start-self': startSelfFlow(); break;
+    case 'retake': if(confirm('Clear your blueprint and start over? Candidates are kept.')){ state.self=emptyProfile('self','self'); await save(); startSelfFlow(); } break;
+    case 'settings': setView('settings'); break;
+    case 'back-to-profile': state.flow=null; setView('profile'); break;
+
+    // module quiz
+    case 'recip-answer': { const r=ensureResp(t.dataset.id); r.answer=parseInt(t.dataset.v,10); if(!r.preferred||!r.preferred.length) r.preferred=[r.answer]; touch(); break; }
+    case 'recip-pref': { const r=ensureResp(t.dataset.id); const v=parseInt(t.dataset.v,10); r.preferred=r.preferred||[]; const i=r.preferred.indexOf(v); if(i<0)r.preferred.push(v); else r.preferred.splice(i,1); touch(); break; }
+    case 'recip-imp': { const r=ensureResp(t.dataset.id); r.importance=t.dataset.k; touch(); break; }
+    case 'likert': { const store=t.dataset.store; const p=state.flow.profile; const raw=store==='tipi'?p.tipiRaw:store==='ecr'?p.ecrRaw:p.gottmanRaw; raw[t.dataset.id]=parseInt(t.dataset.v,10); touch(); break; }
+    case 'gstyle': { state.flow.profile.gottmanRaw.g_style=t.dataset.v; touch(); break; }
+    case 'mod-back': advanceModule(-1); break;
+    case 'mod-next': advanceModule(1); break;
+
+    // dealbreakers
+    case 'db-answer': { state.flow.profile.dealbreakers[t.dataset.id]=t.dataset.v; touch(); break; }
+    case 'db-nn': { const id=t.dataset.id; state.flow.profile.nonNegotiable[id]=t.checked; break; }
+    case 'db-back': state.flow.moduleIndex=FULL_MODULES.length-1; setView('module'); break;
+    case 'db-done': await finishFlow(); break;
+
+    // candidates
+    case 'add-candidate': setView('addChoice'); break;
+    case 'add-import': document.getElementById('importFile').click(); break;
+    case 'add-proxy': state.flow={kind:'proxy', profile:emptyProfile(nextId(),'proxy'), moduleIndex:0, returnView:'profile'}; setView('candName'); break;
+    case 'add-quick': state.flow={kind:'quick', profile:emptyProfile(nextId(),'quick'), moduleIndex:0, returnView:'profile'}; state.flow.profile.quick={}; setView('candName'); break;
+    case 'cand-name-next': setView(state.flow.kind==='quick'?'quick':'module'); break;
+    case 'quick-answer': { state.flow.profile.quick=state.flow.profile.quick||{}; state.flow.profile.quick[t.dataset.cat]=parseInt(t.dataset.v,10); render(); break; }
+    case 'quick-done': { const p=state.flow.profile; state.candidates.push(p); state.lastCandidateId=p.id; state.flow=null; await save(); setView('candResult'); break; }
+    case 'view-candidate': state.lastCandidateId=t.dataset.id; setView('candResult'); break;
+    case 'delete-candidate': if(confirm('Delete this candidate?')){ state.candidates=state.candidates.filter(c=>c.id!==t.dataset.id); await save(); setView('profile'); } break;
+    case 'compare-all': setView('compare'); break;
+    case 'share-candidate-link': shareCandidateLink(); break;
+
+    // checkups
+    case 'add-checkup': state.checkupFor=t.dataset.id; state.checkupDraft={}; setView('checkup'); break;
+    case 'checkup-save': { const c=state.candidates.find(x=>x.id===state.checkupFor); if(c){ c.checkups=c.checkups||[]; c.checkups.push({at:nowISO(), ...defaultsCheckup(state.checkupDraft)}); await save(); state.lastCandidateId=c.id; setView('candResult'); } break; }
+
+    // crypto/settings
+    case 'enable-enc': await enableEncryption(); break;
+    case 'disable-enc': await disableEncryption(); break;
+    case 'unlock': await tryUnlock(); break;
+    case 'export-json': await exportJSON(false); break;
+    case 'export-json-enc': await exportJSON(true); break;
     case 'import-json': document.getElementById('importFile').click(); break;
+
+    // candidate mode
+    case 'candidate-start': state.flow={kind:'candidate', profile:emptyProfile(nextId(),'candidate-self'), moduleIndex:0, returnView:'candidateExport'}; setView('module'); break;
+    case 'candidate-export': exportCandidate(false); break;
+    case 'candidate-export-enc': exportCandidate(true); break;
     default: break;
   }
 });
 
-document.getElementById('importFile').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      state.answers = data.answers || {};
-      state.dealbreakers = data.dealbreakers || [];
-      state.dealbreakerOther = data.dealbreakerOther || '';
-      state.candidates = data.candidates || [];
-      state.view = Object.keys(state.answers).length ? 'profile' : 'intro';
-      render();
-    } catch(err){
-      alert('That file could not be read as a blueprint export.');
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
+function ensureResp(id){ const p=state.flow.profile; if(!p.responses[id]) p.responses[id]={answer:null,preferred:[],importance:'somewhat'}; return p.responses[id]; }
+let _saveTimer=null;
+function scheduleSave(){ if(!state.db) return; clearTimeout(_saveTimer); _saveTimer=setTimeout(()=>{ save(); }, 400); }
+function touch(){ render(); scheduleSave(); }
+function defaultsCheckup(d){ const o={}; CHECKUP_ITEMS.forEach(it=> o[it.id]= d&&d[it.id]!=null?d[it.id]:4); return o; }
+
+async function finishFlow(){
+  const f=state.flow;
+  if (f.kind==='self'){ deriveAll(state.self); await save(); state.flow=null; setView('profile'); }
+  else if (f.kind==='proxy'){ deriveAll(f.profile); state.candidates.push(f.profile); state.lastCandidateId=f.profile.id; state.flow=null; await save(); setView('candResult'); }
+  else if (f.kind==='candidate'){ deriveAll(f.profile); setView('candidateExport'); }
+}
+
+function shareCandidateLink(){
+  const url = location.href.split('#')[0] + '#candidate';   // location.href works under file:// (origin is null there)
+  if (navigator.clipboard){ navigator.clipboard.writeText(url).then(()=>{ state.toast='Candidate link copied — send it to the person you want to compare with.'; render(); }); }
+  else { prompt('Copy this link and send it:', url); }
+}
+
+async function enableEncryption(){
+  const p1=document.getElementById('pass1').value, p2=document.getElementById('pass2').value;
+  if (!p1 || p1.length<6){ alert('Choose a passphrase of at least 6 characters.'); return; }
+  if (p1!==p2){ alert('Passphrases do not match.'); return; }
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  state.cryptoKey = await deriveKey(p1, salt);
+  state.saltB64 = b64(salt); state.encEnabled=true;
+  await save(); state.toast='Encryption enabled.'; setView('profile');
+}
+async function disableEncryption(){
+  if(!confirm('Turn off encryption? Your local data will be stored unencrypted.')) return;
+  state.encEnabled=false; state.cryptoKey=null; state.saltB64=null; await save(); state.toast='Encryption disabled.'; setView('settings');
+}
+async function tryUnlock(){
+  const pass=document.getElementById('unlockPass').value; if(!pass) return;
+  try{
+    const salt=unb64(state.saltB64); const key=await deriveKey(pass,salt);
+    const rec = await dbGet(state.db,'data');
+    const data = await decryptJSON(rec, key);
+    state.cryptoKey=key; loadAppData(data); state.locked=false;
+    setView(profileHasAnyData(state.self)?'profile':'intro');
+  }catch(e){ renderUnlock(true); }
+}
+
+document.getElementById('importFile').addEventListener('change', e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader(); reader.onload=ev=> handleImport(ev.target.result); reader.readAsText(file); e.target.value='';
 });
 
-/* ====================== INIT ====================== */
+/* =============================== [BOOT] =============================== */
 
-render();
+async function boot(){
+  if (location.hash==='#selftest'){ return runSelfTests(); }
+  if (location.hash==='#candidate'){ state.mode='candidate'; setView('candidateIntro'); return; }
+  state.db = await openDB();
+  const meta = await dbGet(state.db,'meta');
+  if (meta && meta.encEnabled){
+    state.encEnabled=true; state.saltB64=meta.salt; state.locked=true; setView('unlock'); return;
+  }
+  const rec = await dbGet(state.db,'data');
+  if (rec && !rec.enc){ loadAppData(rec); }
+  setView(profileHasAnyData(state.self)?'profile':'intro');
+}
+
+/* --- in-browser assertion harness (visit #selftest) --- */
+function runSelfTests(){
+  const out=[]; let pass=0,fail=0;
+  const ok=(n,c)=>{ if(c){pass++;out.push('✓ '+n);} else {fail++;out.push('✗ '+n);} };
+  const near=(a,b,e=0.01)=>Math.abs(a-b)<=e;
+  const tAll={}; for(let i=1;i<=10;i++)tAll['tipi'+i]=7;
+  ok('TIPI all-7 → traits ~4', (()=>{const b=deriveBigFive(tAll);return near(b.E,4)&&near(b.A,4)&&near(b.C,4)&&near(b.ES,4)&&near(b.O,4);})());
+  ok('ECR secure classification', deriveAttachment({ecr1:7,ecr3:1,ecr5:7,ecr7:1,ecr9:7,ecr11:1,ecr2:1,ecr4:1,ecr6:1,ecr8:7,ecr10:1,ecr12:1}).style==='secure');
+  ok('ECR fearful classification', deriveAttachment({ecr1:1,ecr3:7,ecr5:1,ecr7:7,ecr9:1,ecr11:7,ecr2:7,ecr4:7,ecr6:7,ecr8:1,ecr10:7,ecr12:7}).style==='fearful');
+  ok('Gottman contempt=1', near(deriveGottman({g_cri1:1,g_cri2:1,g_con1:5,g_con2:5,g_def1:1,g_def2:1,g_sto1:1,g_sto2:1}).contempt,1));
+  const A={responses:{q:{answer:1,preferred:[1],importance:'very'}}}, B={responses:{q:{answer:1,preferred:[9],importance:'very'}}};
+  ok('geometric mean penalizes asymmetry (=0)', calculateReciprocalMatch(A,B).mutualMatch===0);
+  const self={dealbreakers:{childbearing:'yes'},nonNegotiable:{childbearing:true}};
+  ok('gate excludes conflicting childbearing', !passesDealbreakers(self,{dealbreakers:{childbearing:'no'},derived:{}}).pass);
+  ok('gate passes open childbearing', passesDealbreakers(self,{dealbreakers:{childbearing:'open'},derived:{}}).pass);
+  const ranked=rankTOPSIS([{id:'x',values:{m:90,a:1}},{id:'y',values:{m:50,a:6}}],[{key:'m',type:'benefit',weight:2},{key:'a',type:'cost',weight:1}]);
+  ok('TOPSIS ranks best first', ranked[0].id==='x');
+  appEl.innerHTML = shell(`<div class="panel"><p class="eyebrow">Self-test</p><h2 class="section-title">${pass} passed, ${fail} failed</h2><pre style="font-family:var(--font-mono);font-size:0.8rem;line-height:1.8;color:${fail?'#e7a59c':'#5FA8A0'}">${out.join('\n')}</pre></div>`, 'Self-test');
+}
+
+window.addEventListener('hashchange', ()=>{ if(location.hash==='#candidate'||location.hash==='#selftest') location.reload(); });
+boot();
 </script>
 </body>
 </html>
