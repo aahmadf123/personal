@@ -14,10 +14,10 @@ opened directly from disk (`file://`).
 You answer a few short modules about **yourself and what you're looking for**,
 and get a portrait of the ideal partner for you. Nobody else has to participate.
 
-**You answer six modules**
+**You answer a few modules — only about yourself**
 - **Values, Communication, Affection, Lifestyle, Shared Meaning, Finances** —
-  where you stand, what you're looking for in a partner (defaults to matching
-  you — adjust if you want something different), and how much each matters.
+  just where *you* stand on each. The app derives your ideal partner from these
+  (someone aligned with you), so there's nothing to specify "about them."
 - **Personality** — the Big Five via the validated **TIPI** (Gosling et al. 2003).
 - **Attachment & conflict** — attachment anxiety/avoidance via the **ECR-S**
   (Wei et al. 2007) and your Gottman conflict style + the **Four Horsemen**.

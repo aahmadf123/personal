@@ -200,9 +200,8 @@
 
 const SCHEMA_VERSION = 2;
 
+// Importance is no longer asked per-question; kept as a uniform default so fitToIdeal weights evenly.
 const IMPORTANCE_WEIGHTS = { irrelevant:0, little:1, somewhat:10, very:50, mandatory:250 };
-const IMPORTANCE_ORDER = ['irrelevant','little','somewhat','very','mandatory'];
-const IMPORTANCE_LABEL = { irrelevant:'Irrelevant', little:'A little', somewhat:'Somewhat', very:'Very', mandatory:'Mandatory' };
 
 // Who the user is looking for — drives all portrait copy. Configurable in settings.
 const SEEKING = {
@@ -737,10 +736,10 @@ function renderIntro(){
     <div class="panel intro">
       <p class="eyebrow">Partner Blueprint</p>
       <h2>Discover the ideal ${seek.noun} for you.</h2>
-      <p>A private, science-informed portrait built from <em>your</em> answers alone — no one else has to participate. You'll answer six short modules about yourself and what you want (values, communication, affection &amp; lifestyle, shared meaning &amp; finances), plus validated personality (Big&nbsp;Five / TIPI) and attachment &amp; conflict-style (ECR-S / Gottman) measures, and your hard non-negotiables.</p>
+      <p>A private, science-informed portrait built from <em>your</em> answers alone — no one else has to participate. You'll answer short modules about yourself (values, communication, affection &amp; lifestyle, shared meaning &amp; finances), plus validated personality (Big&nbsp;Five / TIPI) and attachment &amp; conflict-style (ECR-S / Gottman) measures, and your hard non-negotiables.</p>
       <ul>
-        <li><span class="num">01</span><span>Answer about yourself and what you're looking for in a partner.</span></li>
-        <li><span class="num">02</span><span>Get a portrait of your ideal ${seek.noun}: ${seek.pos} values, personality, attachment style, an archetype, and an 8-axis compass.</span></li>
+        <li><span class="num">01</span><span>Answer a few short modules about yourself.</span></li>
+        <li><span class="num">02</span><span>The app derives your ideal ${seek.noun}: ${seek.pos} values, personality, attachment style, an archetype, and an 8-axis compass.</span></li>
         <li><span class="num">03</span><span>Optional: size up someone real — you answer about ${seek.pos === 'their' ? 'them' : seek.subj} — and see how well ${seek.subj} fit${seek.subj==='they'?'':'s'} your ideal.</span></li>
       </ul>
       <p class="hint">Everything stays on this device. Turn on passphrase encryption to protect it at rest, and export a backup you keep yourself. This is a self-reflection tool, not clinical advice.</p>
@@ -818,18 +817,14 @@ function renderRecipModule(catId, p, isSelf){
           <div class="sub-label">${escapeHtml((p.name||seek.subjCap))}'s answer</div><div class="opts">${ans}</div></div>`;
       }).join('');
   }
-  const lookIn = seek.noun==='woman' ? 'her' : seek.noun==='man' ? 'him' : 'a partner';
-  return `<p class="section-desc">For each: where <em>you</em> stand, what you're looking for in ${lookIn} (defaults to matching you — adjust if you want something different), and how much it matters.</p>` +
+  // Self flow: answer only about yourself. The ideal match is derived from these answers.
+  return `<p class="section-desc">Just answer for yourself — your ideal match is built from your answers.</p>` +
     items.map(it=>{
-      const r = p.responses[it.id] || {answer:null, preferred:[], importance:'somewhat'};
+      const r = p.responses[it.id] || {answer:null};
       const ans = it.options.map(([v,l])=>`<button data-action="recip-answer" data-id="${it.id}" data-v="${v}" class="${r.answer===v?'sel':''}">${escapeHtml(l)}</button>`).join('');
-      const acc = it.options.map(([v,l])=>`<button data-action="recip-pref" data-id="${it.id}" data-v="${v}" class="${(r.preferred||[]).includes(v)?'sel':''}">${escapeHtml(l)}</button>`).join('');
-      const imp = IMPORTANCE_ORDER.map(k=>`<button data-action="recip-imp" data-id="${it.id}" data-k="${k}" class="${r.importance===k?'sel':''}">${IMPORTANCE_LABEL[k]}</button>`).join('');
       return `<div class="item">
         <p class="q-text">${escapeHtml(it.text)}</p>
-        <div class="sub-label">You</div><div class="opts">${ans}</div>
-        <div class="sub-label">In ${lookIn}, you're looking for</div><div class="opts accept">${acc}</div>
-        <div class="sub-label">How much this matters</div><div class="imp">${imp}</div>
+        <div class="opts">${ans}</div>
       </div>`;
     }).join('');
 }
@@ -940,8 +935,8 @@ function renderProfile(){
         </div>
       </div>
     </div>
-    <div class="panel"><p class="eyebrow">What you're looking for</p><table class="breakdown"><tbody>${wantsHtml||'<tr><td class="hint">Complete the value/lifestyle modules to populate this.</td></tr>'}</tbody></table></div>
-    <div class="panel"><p class="eyebrow">Her must-haves (your non-negotiables)</p>${dbHtml}</div>
+    <div class="panel"><p class="eyebrow">${seek.posCap} values &amp; lifestyle (aligned with you)</p><table class="breakdown"><tbody>${wantsHtml||'<tr><td class="hint">Complete the value/lifestyle modules to populate this.</td></tr>'}</tbody></table></div>
+    <div class="panel"><p class="eyebrow">${seek.posCap} must-haves (your non-negotiables)</p>${dbHtml}</div>
     <div class="panel">
       <p class="eyebrow">Size up someone real</p>
       <p class="section-desc">Considering a specific person? You answer a few questions about ${seek.pos==='their'?'them':seek.subj} — ${seek.subj} never has to participate — and see how well ${seek.subj} fit${seek.subj==='they'?'':'s'} this ideal, with the same dealbreaker gate.</p>
@@ -955,7 +950,7 @@ function generateIdealText(self, ideal){
   const ranked = RECIP_CATS.map(c=>({c, s:ideal.cats[c.id].score})).sort((a,b)=>b.s-a.s);
   const top=ranked[0].c, second=ranked[1].c;
   const topWants = ideal.cats[top.id].wants.slice(0,2);
-  let p1 = `The ideal ${seek.noun} for you leans most into <strong>${top.label.toLowerCase()}</strong> and <strong>${second.label.toLowerCase()}</strong>`;
+  let p1 = `Based on your answers, the ideal ${seek.noun} for you is aligned with you on <strong>${top.label.toLowerCase()}</strong> and <strong>${second.label.toLowerCase()}</strong>`;
   p1 += topWants.length ? ` — someone who reads as "${topWants.map(w=>escapeHtml(w.toLowerCase())).join('" and "')}".` : '.';
   let p2 = `In how ${seek.subj} connect${seek.subj==='they'?'':'s'} and handle${seek.subj==='they'?'':'s'} conflict, ${seek.subj} ${seek.subj==='they'?'are':'is'} ${ideal.attachment.rationale}`;
   let p3 = `Temperamentally, what matters most is <strong>warmth</strong> and <strong>emotional steadiness</strong> — ${seek.subj} ${seek.subj==='they'?'are':'is'} agreeable and calm under stress, and share${seek.subj==='they'?'':'s'} your level of openness and social energy. (This describes who ${seek.subj} ${seek.subj==='they'?'are':'is'}, not how ${seek.subj} look${seek.subj==='they'?'':'s'}.)`;
@@ -1301,9 +1296,7 @@ appEl.addEventListener('click', async e=>{
     case 'back-to-profile': state.flow=null; setView('profile'); break;
 
     // module quiz
-    case 'recip-answer': { const r=ensureResp(t.dataset.id); r.answer=parseInt(t.dataset.v,10); if(!r.preferred||!r.preferred.length) r.preferred=[r.answer]; touch(); break; }
-    case 'recip-pref': { const r=ensureResp(t.dataset.id); const v=parseInt(t.dataset.v,10); r.preferred=r.preferred||[]; const i=r.preferred.indexOf(v); if(i<0)r.preferred.push(v); else r.preferred.splice(i,1); touch(); break; }
-    case 'recip-imp': { const r=ensureResp(t.dataset.id); r.importance=t.dataset.k; touch(); break; }
+    case 'recip-answer': { const r=ensureResp(t.dataset.id); r.answer=parseInt(t.dataset.v,10); r.preferred=[r.answer]; r.importance=r.importance||'somewhat'; touch(); break; }
     case 'likert': { const store=t.dataset.store; const p=state.flow.profile; const raw=store==='tipi'?p.tipiRaw:store==='ecr'?p.ecrRaw:p.gottmanRaw; raw[t.dataset.id]=parseInt(t.dataset.v,10); touch(); break; }
     case 'gstyle': { state.flow.profile.gottmanRaw.g_style=t.dataset.v; touch(); break; }
     case 'mod-back': advanceModule(-1); break;
