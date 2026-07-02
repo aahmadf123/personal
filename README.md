@@ -1,58 +1,51 @@
 # Partner Blueprint
 
-A privacy-first, scientifically grounded **romantic compatibility engine** that runs
-entirely in your browser. No accounts, no servers, no tracking — your data never
-leaves your device. It's a structured self-reflection and decision-support tool,
-**not** a clinical or diagnostic instrument.
+A privacy-first, science-informed tool that builds a portrait of **your ideal
+partner** from your own answers — who they are and what they're like. It runs
+entirely in your browser: no accounts, no servers, no tracking. It's a
+structured self-reflection and decision-support tool, **not** a clinical or
+diagnostic instrument.
 
 Live: served as a static GitHub Pages site (`index.html`). It also works when
 opened directly from disk (`file://`).
 
 ## What it does
 
-You build a **blueprint** of what you're actually looking for across six modules,
-then test real candidates against it.
+You answer a few short modules about **yourself and what you're looking for**,
+and get a portrait of the ideal partner for you. Nobody else has to participate.
 
-**Six assessment modules**
-- **Values, Communication, Affection, Lifestyle** — reciprocal preference items
-  (your answer · what you'd accept in a partner · how much it matters).
-- **Shared Meaning & Finances** — rituals of connection, life goals, and the
-  highest-signal money-compatibility questions.
-- **Personality** — the Big Five via the validated **TIPI** (Ten-Item Personality
-  Inventory, Gosling et al. 2003).
-- **Attachment & Conflict** — attachment anxiety/avoidance via the **ECR-S**
-  (Wei et al. 2007) and Gottman conflict style + the **Four Horsemen**.
+**You answer a few modules — only about yourself**
+- **Values, Communication, Affection, Lifestyle, Shared Meaning, Finances** —
+  just where *you* stand on each. The app derives your ideal partner from these
+  (someone aligned with you), so there's nothing to specify "about them."
+- **Personality** — the Big Five via the validated **TIPI** (Gosling et al. 2003).
+- **Attachment & conflict** — attachment anxiety/avoidance via the **ECR-S**
+  (Wei et al. 2007) and your Gottman conflict style + the **Four Horsemen**.
 - **Non-negotiables** — hard dealbreakers (childbearing, relocation, substances,
   religion).
 
-**Three-tier matching engine**
-1. **Non-compensatory gate** — a mismatch on a hard non-negotiable (or a candidate
-   with high Contempt) *excludes* them from ranking; strong scores elsewhere cannot
-   compensate.
-2. **Reciprocal geometric match** — OkCupid-style. Each side's satisfaction is
-   scored from importance-weighted preferences and combined with a **geometric mean**,
-   which penalizes one-sided matches.
-3. **TOPSIS ranking** — ranks surviving candidates across benefit criteria
-   (reciprocal match, agreeableness, emotional stability, shared values, finances)
-   and cost criteria (attachment anxiety/avoidance, conflict volatility).
+**You get your ideal partner**
+- An **archetype** (e.g. "The Secure Anchor") and a written portrait.
+- Their **values and lifestyle**, taken from what you said you're looking for.
+- Their **personality and attachment style, auto-derived from relationship
+  science** using *your own* results — e.g. if you lean anxious, it recommends a
+  secure partner and explains why. (This describes who they are, not how they
+  look.)
+- An **8-axis compass** and an **attachment quadrant**.
 
-**Visual decision-support**
-- 8-axis **Joint Compass** (your ideal vs. a candidate).
-- **Attachment Style Quadrant** (anxiety × avoidance, four quadrants).
-- **Post-date check-ins** that log lived experience over time (Joel et al. 2020).
+## Size up someone real (optional)
 
-## Candidates & reciprocity
+Considering a specific person? Add them and answer a few questions with **your
+best read on them** — they never have to participate. You'll see:
 
-For a true mutual score, a candidate fills out **their own** questionnaire and
-sends you the file:
+- a **Fit to your ideal** score (how well your read on them matches what you're
+  looking for, weighted by what matters most to you),
+- an **attachment pairing** read (their style vs. yours), and
+- the same hard **dealbreaker gate** — a conflict on a non-negotiable excludes
+  them outright, no matter how well everything else fits.
 
-1. Share the candidate link (`…/index.html#candidate`) — it opens a standalone
-   questionnaire in the same page.
-2. They complete it on their device and download `candidate-blueprint.json`.
-3. You import it (**Add candidate → Import their questionnaire**).
-
-Two fallbacks exist when that isn't possible: a **proxy** estimate (you answer on
-their behalf, flagged lower-confidence) and a **quick** six-slider estimate.
+You can also log **post-date check-ins** over time, since lived experience is the
+strongest signal (Joel et al. 2020).
 
 ## Privacy & data
 
@@ -65,8 +58,9 @@ their behalf, flagged lower-confidence) and a **quick** six-slider estimate.
 - **Durable backup.** Browser storage can be evicted, so export a
   `partner-blueprint.json` (optionally encrypted) as your real backup.
 
-Export format carries a `schemaVersion` (currently `2`); older `version: 1`
-exports are migrated automatically on import.
+You can change who you're looking for (woman / man / partner) any time in
+settings — it only tailors the wording. Export format carries a `schemaVersion`;
+older `version: 1` exports are migrated automatically on import.
 
 ## Tech
 
